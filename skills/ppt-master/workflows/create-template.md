@@ -42,7 +42,7 @@ Branch by the type of reference source the user supplied. This step produces ana
 | Type | What the user supplied | Tool / read path | Replication modes available |
 |------|-------------------------|------------------|------------------------------|
 | **A** `.pptx` reference | A `.pptx` file path | `pptx_template_import.py` → `manifest.json` + `svg/master_*.svg` + `svg/layout_*.svg` + `svg/slide_*.svg` + `svg-flat/slide_*.svg` + `assets/` | `standard` / `fidelity` / `mirror` |
-| **B** Existing SVG assets | `projects/<x>/svg_output/`, `templates/layouts/<existing>`, or a loose `.svg` folder | `ls` + `Read` each `*.svg`; plus `design_spec.md` / `spec_lock.md` if present | `standard` / `fidelity` (AI visual clustering) / `mirror` (direct 1:1 copy) |
+| **B** Existing SVG assets | `~/项目/YYYY-mm/<x>/svg_output/`, `templates/layouts/<existing>`, or a loose `.svg` folder | `ls` + `Read` each `*.svg`; plus `design_spec.md` / `spec_lock.md` if present | `standard` / `fidelity` (AI visual clustering) / `mirror` (direct 1:1 copy) |
 | **C** Image / visual references | Screenshot folder, single image, PDF pages | `ls` + `Read` each file (multimodal visual recognition) | `standard` only |
 | **D** No reference source | Verbal description only ("McKinsey style", "tech blue", "dark minimal") | — | `standard` only |
 
@@ -237,7 +237,7 @@ Create the final template directory:
 mkdir -p "skills/ppt-master/templates/layouts/<template_id>"
 ```
 
-> **Output location**: Global templates go to `skills/ppt-master/templates/layouts/`; project templates go to `projects/<project>/templates/`
+> **Output location**: Global templates go to `skills/ppt-master/templates/layouts/`; project templates go to `~/项目/YYYY-mm/<project>/templates/`
 >
 > The generated directory name must match the final template ID used in `layouts_index.json`.
 

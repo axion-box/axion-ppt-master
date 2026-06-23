@@ -159,7 +159,7 @@ def generate(prompt: str,
     api_key = require_api_key(
         "ZHIPU_API_KEY",
         "BIGMODEL_API_KEY",
-        message="No API key found. Set ZHIPU_API_KEY or BIGMODEL_API_KEY in the current environment or a .env file.",
+        message="No API key found. Set ZHIPU_API_KEY or BIGMODEL_API_KEY in the current environment.",
     )
     base_url = os.environ.get("ZHIPU_BASE_URL") or DEFAULT_ENDPOINT
     resolved_model = model or os.environ.get("ZHIPU_MODEL") or DEFAULT_MODEL

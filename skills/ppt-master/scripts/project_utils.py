@@ -76,6 +76,19 @@ CANVAS_FORMAT_ALIASES = {
     '小红书': 'xiaohongshu',
 }
 
+DEFAULT_PROJECT_WORKSPACE_ROOT = Path.home() / "项目"
+
+
+def get_default_project_workspace_root() -> Path:
+    """Return the home-level workspace that holds month-based project folders."""
+    return DEFAULT_PROJECT_WORKSPACE_ROOT
+
+
+def get_default_project_base_dir(now: Optional[datetime] = None) -> Path:
+    """Return the default project parent directory for the current month."""
+    current = now or datetime.now()
+    return get_default_project_workspace_root() / current.strftime("%Y-%m")
+
 
 def normalize_canvas_format(format_key: str) -> str:
     """Normalize canvas format key name (supports common aliases)."""
@@ -154,7 +167,7 @@ def get_project_info(project_path: str) -> Dict:
     Returns:
         Project information dictionary
     """
-    project_path = Path(project_path)
+    project_path = Path(project_path).expanduser()
 
     # Parse directory name
     parsed = parse_project_name(project_path.name)
@@ -224,7 +237,7 @@ def validate_project_structure(project_path: str, verbose: bool = False) -> Tupl
     Returns:
         (is_valid, error_list, warning_list)
     """
-    project_path = Path(project_path)
+    project_path = Path(project_path).expanduser()
     errors = []
     warnings = []
 
@@ -364,20 +377,31 @@ def find_all_projects(base_dir: str) -> List[Path]:
     Returns:
         List of project directories
     """
-    base_path = Path(base_dir)
+    base_path = Path(base_dir).expanduser()
     if not base_path.exists():
         return []
 
-    projects = []
-    for item in base_path.iterdir():
-        if item.is_dir() and not item.name.startswith('.'):
-            # Check if it's a valid project directory (contains svg_output or design spec)
-            has_svg_output = (item / 'svg_output').exists()
-            has_spec = any((item / f).exists() for f in
-                           ['design_spec.md', '设计规范与内容大纲.md', 'design_specification.md', '设计规范.md'])
+    def is_project_dir(path: Path) -> bool:
+        has_svg_output = (path / 'svg_output').exists()
+        has_spec = any(
+            (path / f).exists()
+            for f in ['design_spec.md', '设计规范与内容大纲.md', 'design_specification.md', '设计规范.md']
+        )
+        return has_svg_output or has_spec
 
-            if has_svg_output or has_spec:
-                projects.append(item)
+    if base_path.is_dir() and is_project_dir(base_path):
+        return [base_path]
+
+    projects = []
+    for item in sorted(base_path.iterdir()):
+        if not item.is_dir() or item.name.startswith('.'):
+            continue
+        if is_project_dir(item):
+            projects.append(item)
+            continue
+        for child in sorted(item.iterdir()):
+            if child.is_dir() and not child.name.startswith('.') and is_project_dir(child):
+                projects.append(child)
 
     return sorted(projects)
 
@@ -409,7 +433,7 @@ def get_project_stats(project_path: str) -> Dict:
     Returns:
         Statistics dictionary
     """
-    project_path = Path(project_path)
+    project_path = Path(project_path).expanduser()
     stats = {
         'total_files': 0,
         'svg_files': 0,

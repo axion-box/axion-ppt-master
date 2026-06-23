@@ -30,7 +30,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from config import load_prefixed_env_file
+from config import apply_runtime_env_defaults
 from tts_backends import (
     backend_cosyvoice,
     backend_edge,
@@ -46,18 +46,6 @@ class AudioBackend:
     extension: str
     api_key: str = ""
     voice_id: str = ""
-
-
-def _load_tts_env_file() -> None:
-    """Load TTS-related keys from the first .env file, without overriding shell env."""
-    load_prefixed_env_file((
-        "ELEVENLABS_",
-        "MINIMAX_",
-        "QWEN_",
-        "DASHSCOPE_",
-        "COSYVOICE_",
-    ))
-
 
 def spoken_text(markdown: str) -> str:
     """Return narration text exactly from notes, except Markdown headings."""
@@ -75,7 +63,7 @@ def spoken_text(markdown: str) -> str:
 
 
 def main() -> int:
-    _load_tts_env_file()
+    apply_runtime_env_defaults()
 
     parser = argparse.ArgumentParser(
         description=__doc__,

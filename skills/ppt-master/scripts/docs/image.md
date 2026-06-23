@@ -43,7 +43,7 @@ Unified image generation entry point.
 ```bash
 python3 scripts/image_gen.py "A modern futuristic workspace"
 python3 scripts/image_gen.py "Abstract tech background" --aspect_ratio 16:9 --image_size 4K
-python3 scripts/image_gen.py "Concept car" -o projects/demo/images
+python3 scripts/image_gen.py "Concept car" -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
 python3 scripts/image_gen.py "Beautiful landscape" -n "low quality, blurry, watermark"
 python3 scripts/image_gen.py --list-backends
 ```
@@ -63,22 +63,24 @@ python3 scripts/image_gen.py "A product KV in cinematic style" --backend volceng
 Configuration sources:
 
 1. Current process environment variables
-2. First `.env` found in this order:
-   - Current working directory
-   - Skill directory (e.g. `~/.agents/skills/ppt-master/.env`)
-   - Clone repo root
-   - `~/.ppt-master/.env`
+2. Built-in defaults:
+   - `IMAGE_BACKEND=openai`
+   - `OPENAI_API_BASE=https://api.glenclaw.com`
+   - `OPENAI_API_KEY=`
+   - `OPENAI_IMAGE_MODEL=image`
+   - `OPENAI_MODEL=chat` (text LLM only; ignored by image generation)
 
-The active backend must always be selected explicitly via `IMAGE_BACKEND`.
+The active backend defaults to `openai`; override it by setting `IMAGE_BACKEND`.
 
-Example `.env`:
+Example shell exports:
 
-```env
+```bash
 IMAGE_BACKEND=openai
 OPENAI_API_KEY=sk-xxx
-OPENAI_MODEL=gpt-image-2
+OPENAI_API_BASE=https://api.glenclaw.com
+OPENAI_IMAGE_MODEL=image
 # Optional proxy
-# OPENAI_BASE_URL=http://127.0.0.1:3000/v1
+# OPENAI_API_BASE=http://127.0.0.1:3000/v1
 # OpenAI-compatible provider knobs:
 # OPENAI_SIZE_PRESET=auto
 # OPENAI_RESPONSE_FORMAT=auto
@@ -98,14 +100,15 @@ Example process environment:
 ```bash
 export IMAGE_BACKEND=openai
 export OPENAI_API_KEY=sk-xxx
-export OPENAI_MODEL=gpt-image-2
+export OPENAI_API_BASE=https://api.glenclaw.com
+export OPENAI_IMAGE_MODEL=image
 export OPENAI_OUTPUT_FORMAT=png
 ```
 
-Current process environment wins over `.env`.
+`OPENAI_MODEL` is reserved for text-only LLM workflows and defaults to `chat`; `image_gen.py` ignores it.
 
 OpenAI backend notes:
-- `gpt-image-2` is the default OpenAI model.
+- `OPENAI_IMAGE_MODEL=image` is the default OpenAI-compatible image model.
 - Requests are sent with plain `requests.post()` to improve compatibility with
   OpenAI-compatible proxies that block the OpenAI SDK's `httpx` transport.
 - For `gpt-image-2`, `image_size=512px` means a low-quality draft preset, not a literal 512px edge. The model requires both edges to be multiples of 16px, a long:short ratio no greater than 3:1, and total pixels between 655,360 and 8,294,400.
@@ -113,32 +116,32 @@ OpenAI backend notes:
 - If `OPENAI_OUTPUT_FORMAT=jpeg` or `webp`, generated files use `.jpg` or `.webp` extensions instead of `.png`.
 - OpenAI-compatible providers that reject OpenAI-specific fields can use `OPENAI_RESPONSE_FORMAT=omit`, `OPENAI_QUALITY=omit`, and `OPENAI_SIZE_PRESET=<preset>`. Valid response formats are `auto`, `b64_json`, `url`, and `omit`; valid size presets are `auto`, `legacy`, `gpt-image`, `gpt-image-2`, and `dall-e-2`.
 
-Example `.env` for Agnes AI through the OpenAI-compatible backend:
+Example shell exports for Agnes AI through the OpenAI-compatible backend:
 
-```env
+```bash
 IMAGE_BACKEND=openai
 OPENAI_API_KEY=your-agnes-key
-OPENAI_MODEL=agnes-image-2.1-flash
-OPENAI_BASE_URL=https://apihub.agnes-ai.com/v1
+OPENAI_IMAGE_MODEL=agnes-image-2.1-flash
+OPENAI_API_BASE=https://apihub.agnes-ai.com/v1
 OPENAI_SIZE_PRESET=gpt-image-2
 OPENAI_RESPONSE_FORMAT=omit
 OPENAI_QUALITY=omit
 ```
 
-Use provider-specific keys only (e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`). See `.env.example` in clone mode or `${SKILL_DIR}/.env.example` in skill-install mode for the full list per backend.
+Use provider-specific keys only (e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`) and export them in the current shell.
 
 `IMAGE_API_KEY`, `IMAGE_MODEL`, and `IMAGE_BASE_URL` are intentionally unsupported.
 
-If you keep multiple providers in one `.env` or environment, `IMAGE_BACKEND` must explicitly select the active provider.
+If you keep multiple providers in one environment, `IMAGE_BACKEND` must explicitly select the active provider.
 
 Recommendation:
 - Default to the Core tier for routine PPT work
 - Use Extended only when you need a specific model style
 - Treat Experimental backends as opt-in
 
-Example `.env` for MiniMax image backend:
+Example shell exports for MiniMax image backend:
 
-```env
+```bash
 IMAGE_BACKEND=minimax
 MINIMAX_API_KEY=your-api-key
 # Optional: override base URL (defaults to https://api.minimaxi.com, domestic China endpoint)
@@ -164,7 +167,7 @@ Zero-config web image search across openly-licensed providers. Sister tool to `i
 ```bash
 python3 scripts/image_search.py "offshore wind farm" \
   --filename cover_bg.jpg --slide 01_cover \
-  --orientation landscape -o projects/demo/images
+  --orientation landscape -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
 ```
 
 For multiple web rows, `--batch images/image_queries.json` searches them concurrently (modest default, `--concurrency N` / `IMAGE_SEARCH_CONCURRENCY` to tune) instead of one call per row — the web sister of `image_gen.py --manifest`. Schema and status semantics: [`image-searcher.md`](../../references/image-searcher.md) §5.
@@ -180,7 +183,7 @@ Providers (Openverse and Wikimedia work with no key; configure Pexels / Pixabay 
 
 Default search chain (when `--provider` is unset): zero-config providers first, then keyed providers whose API key is set in the environment. Keyed providers without a key are silently skipped. For polished visual decks, configure at least one keyed provider.
 
-`image_search.py` uses the same `.env` lookup order as `image_gen.py`, so skill installs can keep `PEXELS_API_KEY` / `PIXABAY_API_KEY` in `~/.ppt-master/.env`.
+`image_search.py` also reads environment variables directly. Export `PEXELS_API_KEY` / `PIXABAY_API_KEY` in the current shell before running it when you want higher-quality stock sources.
 
 Query guidance:
 
@@ -201,12 +204,12 @@ Pin a provider, refuse attribution, or override the manifest path:
 # Pin Wikimedia
 python3 scripts/image_search.py "Olympics opening ceremony" \
   --filename event.jpg --provider wikimedia \
-  --orientation landscape -o projects/demo/images
+  --orientation landscape -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
 
 # Strict mode — refuse CC BY / CC BY-SA
 python3 scripts/image_search.py "abstract gradient" \
   --filename hero.jpg --strict-no-attribution \
-  -o projects/demo/images
+  -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
 ```
 
 Output:

@@ -138,7 +138,7 @@ def generate(prompt: str,
     """
     OpenRouter image generation with automatic retry.
 
-    Reads credentials from the current process environment or a `.env` file:
+    Reads credentials from the current process environment:
       OPENROUTER_API_KEY
       OPENROUTER_BASE_URL
       OPENROUTER_MODEL (optional override)
@@ -148,7 +148,7 @@ def generate(prompt: str,
 
     if not api_key:
         raise ValueError(
-            "No API key found. Set OPENROUTER_API_KEY in the current environment or a .env file."
+            "No API key found. Set OPENROUTER_API_KEY in the current environment."
         )
 
     if model is None:

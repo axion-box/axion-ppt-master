@@ -13,8 +13,8 @@ numbers are conditional on the Strategist picking the side-by-side intent.
 
 Usage:
     python scripts/analyze_images.py <images_folder_path>
-    python scripts/analyze_images.py projects/xxx/images
-    python scripts/analyze_images.py projects/xxx/images --canvas ppt43
+    python scripts/analyze_images.py ~/项目/YYYY-mm/<project>/images
+    python scripts/analyze_images.py ~/项目/YYYY-mm/<project>/images --canvas ppt43
 
 Output:
     - Analysis report displayed in console

@@ -17,8 +17,8 @@ Usage:
     python3 scripts/beautify_identity.py <source.pptx> [-o identity.json]
 
 Examples:
-    python3 scripts/beautify_identity.py projects/x/sources/deck.pptx
-    python3 scripts/beautify_identity.py deck.pptx -o projects/x/analysis/deck.identity.json
+    python3 scripts/beautify_identity.py ~/项目/YYYY-mm/x_ppt169_YYYYMMDD/sources/deck.pptx
+    python3 scripts/beautify_identity.py deck.pptx -o ~/项目/YYYY-mm/x_ppt169_YYYYMMDD/analysis/deck.identity.json
 
 Dependencies:
     None beyond the standard library (reuses scripts/pptx_to_svg/).

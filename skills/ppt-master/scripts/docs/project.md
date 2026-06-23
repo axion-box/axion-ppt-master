@@ -1,6 +1,6 @@
 # Project Tools
 
-> Architecture rationale (why `import-sources` defaults are asymmetric for in-repo vs out-of-repo files): see [docs/technical-design.md "Project Structure & Lifecycle"](../../../../docs/technical-design.md#project-structure--lifecycle).
+> Architecture rationale (why `import-sources` defaults are asymmetric for workspace / repo files vs outside files): see [docs/technical-design.md "Project Structure & Lifecycle"](../../../../docs/technical-design.md#project-structure--lifecycle).
 
 Project tools create, validate, and inspect the standard PPT Master workspace.
 
@@ -16,11 +16,12 @@ python3 scripts/project_manager.py info <project_path>
 ```
 
 Notes:
-- Files outside the repo are copied into `sources/` by default
-- With `--move`, files outside the repo are moved into `sources/`
-- Files already inside the repo are moved into `sources/` by default (with a stderr
+- Files outside `~/项目/` and outside the repo are copied into `sources/` by default
+- With `--move`, outside files are moved into `sources/`
+- Files already inside `~/项目/` are moved into `sources/` by default
+- Files already inside the repo are also moved into `sources/` by default (with a stderr
   note), to avoid leaving unintended artifacts that could be committed by mistake.
-  Pass `--copy` to force a copy for in-repo sources instead.
+  Pass `--copy` to force a copy for workspace/repo sources instead.
 - `--move` and `--copy` are mutually exclusive.
 - PPTX-family inputs are enriched automatically under `analysis/` with
   per-deck `<stem>.identity.json` / `<stem>.slide_library.json` plus the shared
@@ -41,8 +42,8 @@ Examples:
 
 ```bash
 python3 scripts/project_manager.py init my_presentation --format ppt169
-python3 scripts/project_manager.py validate projects/my_presentation_ppt169_20251116
-python3 scripts/project_manager.py info projects/my_presentation_ppt169_20251116
+python3 scripts/project_manager.py validate ~/项目/YYYY-mm/my_presentation_ppt169_20251116
+python3 scripts/project_manager.py info ~/项目/YYYY-mm/my_presentation_ppt169_20251116
 ```
 
 ## `project_utils.py`
@@ -67,7 +68,7 @@ Batch-check project structure and compliance.
 
 ```bash
 python3 scripts/batch_validate.py examples
-python3 scripts/batch_validate.py examples projects
+python3 scripts/batch_validate.py examples ~/项目
 python3 scripts/batch_validate.py --all
 python3 scripts/batch_validate.py examples --export
 ```

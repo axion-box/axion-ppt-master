@@ -45,7 +45,7 @@ def _require_api_key() -> str:
     key = (os.environ.get("PEXELS_API_KEY") or "").strip()
     if not key:
         raise RuntimeError(
-            "PEXELS_API_KEY is not set. Add it to your environment or .env file. "
+            "PEXELS_API_KEY is not set. Add it to your environment. "
             "Get one at https://www.pexels.com/api/"
         )
     return key

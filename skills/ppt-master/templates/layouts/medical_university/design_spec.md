@@ -201,7 +201,7 @@ page_types: [cover, toc, chapter, content, ending]
 ### 1. Copy Template to Project
 
 ```bash
-cp templates/layouts/medical_university/* projects/<project>/templates/
+cp templates/layouts/medical_university/* ~/项目/YYYY-mm/<project>/templates/
 ```
 
 ### 2. Logo Placement Guidelines

@@ -23,17 +23,17 @@ Examples:
     # Default: zero-config, quality-first across allowed licenses
     python3 scripts/image_search.py "offshore wind farm" \
         --filename cover_bg.jpg --slide 01_cover \
-        --orientation landscape -o projects/demo/images
+        --orientation landscape -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
 
     # Strict mode: refuse anything that would require attribution
     python3 scripts/image_search.py "abstract gradient" \
         --filename hero.jpg --strict-no-attribution \
-        -o projects/demo/images
+        -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
 
     # Pin a specific provider (useful when an API key is set)
     python3 scripts/image_search.py "executive meeting" \
         --filename team.jpg --provider pexels \
-        --orientation landscape -o projects/demo/images
+        --orientation landscape -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from config import load_prefixed_env_file  # noqa: E402
+from config import apply_runtime_env_defaults  # noqa: E402
 from image_backends.backend_common import download_image  # noqa: E402
 from image_sources.provider_common import (  # noqa: E402
     AssetCandidate,
@@ -110,16 +110,6 @@ SEARCH_VALID_STATUSES = {
 # (see image-searcher.md §8); only Pending/Failed rows are retried on re-run.
 SEARCH_RETRYABLE_STATUSES = {SEARCH_STATUS_PENDING, SEARCH_STATUS_FAILED}
 SEARCH_REQUIRED_ITEM_FIELDS = ("filename", "query", "status")
-
-
-# ---------------------------------------------------------------------------
-# .env loading
-# ---------------------------------------------------------------------------
-
-
-def _load_search_env_file() -> None:
-    """Load image-search keys from the shared PPT Master .env locations."""
-    load_prefixed_env_file(("PEXELS_", "PIXABAY_"))
 
 
 # ---------------------------------------------------------------------------
@@ -932,7 +922,7 @@ def _default_provider_chain() -> list[str]:
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    _load_search_env_file()
+    apply_runtime_env_defaults()
 
     parser = build_parser()
     args = parser.parse_args(argv)

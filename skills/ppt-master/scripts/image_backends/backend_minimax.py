@@ -178,7 +178,7 @@ def generate(prompt: str,
     """Generate an image with retries using the MiniMax backend."""
     api_key = require_api_key(
         "MINIMAX_API_KEY",
-        message="No API key found. Set MINIMAX_API_KEY in the current environment or a .env file.",
+        message="No API key found. Set MINIMAX_API_KEY in the current environment.",
     )
     base_url = os.environ.get("MINIMAX_BASE_URL") or DEFAULT_ENDPOINT
     resolved_model = model or os.environ.get("MINIMAX_MODEL") or DEFAULT_MODEL

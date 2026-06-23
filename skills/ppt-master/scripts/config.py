@@ -14,9 +14,8 @@ Usage:
     colors = Config.get_color_scheme('consulting')
 """
 
-import argparse
-import json
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -37,7 +36,7 @@ WORKFLOWS_DIR = PROJECT_ROOT / 'workflows'
 # Repository root directory
 REPO_ROOT = PROJECT_ROOT.parent.parent
 EXAMPLES_DIR = REPO_ROOT / 'examples'
-PROJECTS_DIR = REPO_ROOT / 'projects'
+PROJECTS_DIR = Path.home() / '项目'
 
 # Template subdirectories
 CHART_TEMPLATES_DIR = TEMPLATES_DIR / 'charts'
@@ -47,113 +46,21 @@ CHART_TEMPLATES_DIR = TEMPLATES_DIR / 'charts'
 # Environment Configuration
 # ============================================================
 
-USER_CONFIG_DIR = Path.home() / '.ppt-master'
-USER_ENV_FILE = USER_CONFIG_DIR / '.env'
+DEFAULT_RUNTIME_ENV = {
+    "IMAGE_BACKEND": "openai",
+    "OPENAI_API_BASE": "https://api.glenclaw.com",
+    "OPENAI_API_KEY": "",
+    "OPENAI_IMAGE_MODEL": "image",
+    "OPENAI_MODEL": "chat",
+}
 
 
-def get_env_candidates() -> list[Path]:
-    """Return the supported .env lookup order."""
-    return [
-        Path.cwd() / '.env',
-        PROJECT_ROOT / '.env',
-        REPO_ROOT / '.env',
-        USER_ENV_FILE,
-    ]
-
-
-def resolve_env_path() -> Path:
-    """
-    Return the first existing .env path.
-
-    If no candidate exists, return the CWD .env path so callers can no-op
-    consistently while still showing a useful default location in messages.
-    """
-    candidates = get_env_candidates()
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0]
-
-
-def strip_env_quotes(value: str) -> str:
-    """Strip matching surrounding quotes from a .env value."""
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
-        return value[1:-1]
-    return value
-
-
-def strip_inline_env_comment(value: str) -> str:
-    """Strip an unquoted inline ``#`` comment from a .env value.
-
-    Matches standard dotenv behavior: a ``#`` outside surrounding quotes
-    starts a comment and is dropped along with the rest of the line. To keep
-    a literal ``#`` in the value, wrap it in single or double quotes.
-    """
-    stripped = value.lstrip()
-    if stripped.startswith(('"', "'")):
-        quote = stripped[0]
-        end = stripped.find(quote, 1)
-        if end != -1:
-            head = value[: len(value) - len(stripped) + end + 1]
-            tail = value[len(head):]
-            hash_pos = tail.find('#')
-            if hash_pos == -1:
-                return value
-            return head + tail[:hash_pos]
-        return value
-    hash_pos = value.find('#')
-    if hash_pos == -1:
-        return value
-    return value[:hash_pos]
-
-
-def load_prefixed_env_file(
-    prefixes: tuple[str, ...],
-    *,
-    deprecated_keys: Optional[dict[str, str]] = None,
-) -> Optional[Path]:
-    """
-    Load matching keys from the first supported .env file.
-
-    Existing process environment variables always win. Keys outside the
-    requested prefixes are ignored so one shared .env can hold image, search,
-    and narration credentials without leaking unrelated values into the
-    process.
-    """
-    env_path = resolve_env_path()
-    if not env_path.exists():
-        return None
-
-    deprecated_keys = deprecated_keys or {}
-    with env_path.open('r', encoding='utf-8') as fh:
-        for lineno, raw_line in enumerate(fh, start=1):
-            line = raw_line.strip()
-            if not line or line.startswith('#'):
-                continue
-            if line.startswith('export '):
-                line = line[7:].lstrip()
-            if '=' not in line:
-                raise ValueError(
-                    f"Invalid line in {env_path}:{lineno}. Expected KEY=VALUE."
-                )
-
-            key, value = line.split('=', 1)
-            key = key.strip()
-            if not key:
-                raise ValueError(
-                    f"Invalid line in {env_path}:{lineno}. Missing variable name."
-                )
-            if not any(key.startswith(prefix) for prefix in prefixes):
-                continue
-            if key in deprecated_keys:
-                raise ValueError(
-                    f"Unsupported key in {env_path}:{lineno}: {key}\n"
-                    f"{deprecated_keys[key]}"
-                )
-            cleaned = strip_inline_env_comment(value).strip()
-            os.environ.setdefault(key, strip_env_quotes(cleaned))
-
-    return env_path
+def apply_runtime_env_defaults(
+    defaults: Optional[dict[str, str]] = None,
+) -> None:
+    """Populate supported environment defaults without reading any files."""
+    for key, value in (defaults or DEFAULT_RUNTIME_ENV).items():
+        os.environ.setdefault(key, value)
 
 
 # ============================================================
@@ -654,7 +561,7 @@ class Config:
     @staticmethod
     def get_project_path(subdir: str = '') -> Path:
         """
-        Get project path.
+        Get the default monthly project path.
 
         Args:
             subdir: Subdirectory name
@@ -662,9 +569,10 @@ class Config:
         Returns:
             Full path
         """
+        base_dir = PROJECTS_DIR / datetime.now().strftime('%Y-%m')
         if subdir:
-            return PROJECT_ROOT / subdir
-        return PROJECT_ROOT
+            return base_dir / subdir
+        return base_dir
 
     @staticmethod
     def export_config(output_file: str = 'config_export.json'):

@@ -100,7 +100,7 @@ def generate(prompt: str,
     api_key = require_api_key(
         "FAL_KEY",
         "FAL_API_KEY",
-        message="No API key found. Set FAL_KEY or FAL_API_KEY in the current environment or a .env file.",
+        message="No API key found. Set FAL_KEY or FAL_API_KEY in the current environment.",
     )
     base_url = os.environ.get("FAL_BASE_URL") or DEFAULT_ENDPOINT
     resolved_model = model or os.environ.get("FAL_MODEL") or DEFAULT_MODEL

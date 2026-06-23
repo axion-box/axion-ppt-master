@@ -6,7 +6,7 @@ description: Generate a brand-only template under `templates/brands/<id>/` — a
 
 > Standalone preset-creation workflow. Output is a brand template package at `skills/ppt-master/templates/brands/<brand_id>/`. Structurally a brand is a template minus the SVG page roster — Strategist locks the brand's color / typography / logo / voice as truth; Executor designs pages freely under those constraints.
 
-This workflow edits the global brand library, not any specific `projects/<x>/`. Consumption follows the same explicit-path rule as layout templates (see [Downstream consumption](#downstream-consumption-informational) at the end).
+This workflow edits the global brand library, not any specific `~/项目/YYYY-mm/<x>/`. Consumption follows the same explicit-path rule as layout templates (see [Downstream consumption](#downstream-consumption-informational) at the end).
 
 > Companion: [`create-template.md`](./create-template.md) generates full templates with SVG pages. Use `create-brand.md` when the user wants identity-only locking with free page layout.
 
@@ -220,7 +220,7 @@ Brand application happens in [`SKILL.md` Step 3](../SKILL.md) under the **same e
 ## Notes
 
 1. **Brand is identity, not layout** — colors / typography / logo / voice / icon style only. Page roster, canvas spec, and signature design elements belong to layout templates; do not duplicate them here.
-2. **Self-contained package** — all brand assets (logo, images, illustrations, icons) live inside `templates/brands/<brand_id>/`. Nothing leaks to workspace root or `projects/`.
+2. **Self-contained package** — all brand assets (logo, images, illustrations, icons) live inside `templates/brands/<brand_id>/`. Nothing leaks to workspace root or `~/项目/YYYY-mm/`.
 3. **No script dependency** — Step 2A reuses existing converters plus AI inline reading. A dedicated `brand_extract.py` is not introduced unless future user feedback demands batch processing or precise color picking from raster logos.
 4. **Multi-brand support** — `templates/brands/` accepts any number of brands; agency / freelancer / multi-client workflows are natural.
 5. **Precedence rule** — when a brand and a layout template both apply, Step 3 fuses them into one `design_spec.md`: brand wins on color / typography / logo / voice / icon style; layout wins on canvas / page roster / spacing / font-size hierarchy / signature visual elements. See `SKILL.md` Step 3 for the full precedence table.

@@ -19,10 +19,10 @@ Usage:
     python3 scripts/confirm_ui/server.py <project_dir>
 
 Examples:
-    python3 scripts/confirm_ui/server.py projects/my-project
-    python3 scripts/confirm_ui/server.py projects/my-project --port 5051
-    python3 scripts/confirm_ui/server.py projects/my-project --no-browser
-    python3 scripts/confirm_ui/server.py projects/my-project --daemon --wait
+    python3 scripts/confirm_ui/server.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD
+    python3 scripts/confirm_ui/server.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD --port 5051
+    python3 scripts/confirm_ui/server.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD --no-browser
+    python3 scripts/confirm_ui/server.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD --daemon --wait
 
 Dependencies:
     flask>=3.0.0

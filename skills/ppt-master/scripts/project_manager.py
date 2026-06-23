@@ -24,6 +24,8 @@ from urllib.parse import urlparse
 try:
     from project_utils import (
         CANVAS_FORMATS,
+        get_default_project_base_dir,
+        get_default_project_workspace_root,
         get_project_info as get_project_info_common,
         normalize_canvas_format,
         validate_project_structure,
@@ -35,6 +37,8 @@ except ImportError:
         sys.path.insert(0, str(tools_dir))
     from project_utils import (  # type: ignore
         CANVAS_FORMATS,
+        get_default_project_base_dir,
+        get_default_project_workspace_root,
         get_project_info as get_project_info_common,
         normalize_canvas_format,
         validate_project_structure,
@@ -115,7 +119,11 @@ class ProjectManager:
     CANVAS_FORMATS = CANVAS_FORMATS
 
     def __init__(self, base_dir: str | Path | None = None) -> None:
-        self.base_dir = Path(base_dir) if base_dir is not None else Path.cwd() / "projects"
+        self.base_dir = (
+            Path(base_dir).expanduser()
+            if base_dir is not None
+            else get_default_project_base_dir()
+        )
 
     def init_project(
         self,
@@ -123,7 +131,7 @@ class ProjectManager:
         canvas_format: str = "ppt169",
         base_dir: str | None = None,
     ) -> str:
-        base_path = Path(base_dir) if base_dir else self.base_dir
+        base_path = Path(base_dir).expanduser() if base_dir else self.base_dir
 
         normalized_format = normalize_canvas_format(canvas_format)
         if normalized_format not in self.CANVAS_FORMATS:
@@ -136,6 +144,7 @@ class ProjectManager:
         date_str = datetime.now().strftime("%Y%m%d")
         project_dir_name = f"{project_name}_{normalized_format}_{date_str}"
         project_path = base_path / project_dir_name
+        base_path.mkdir(parents=True, exist_ok=True)
 
         if project_path.exists():
             raise FileExistsError(f"Project directory already exists: {project_path}")
@@ -620,7 +629,7 @@ class ProjectManager:
     ) -> dict[str, list[str]]:
         if move and copy:
             raise ValueError("--move and --copy are mutually exclusive")
-        project_dir = Path(project_path)
+        project_dir = Path(project_path).expanduser()
         if not project_dir.exists() or not project_dir.is_dir():
             raise FileNotFoundError(f"Project directory not found: {project_dir}")
         if not source_items:
@@ -680,6 +689,14 @@ class ProjectManager:
                 effective_move = False
             elif move:
                 effective_move = True
+            elif is_within_path(source_path, get_default_project_workspace_root()):
+                effective_move = True
+                print(
+                    f"note: {source_path} is inside the default PPT workspace "
+                    f"({get_default_project_workspace_root()}); moved (not copied). "
+                    "Pass --copy to override.",
+                    file=sys.stderr,
+                )
             elif is_within_path(source_path, REPO_ROOT):
                 effective_move = True
                 print(
@@ -831,7 +848,7 @@ class ProjectManager:
         return summary
 
     def validate_project(self, project_path: str) -> tuple[bool, list[str], list[str]]:
-        project_path_obj = Path(project_path)
+        project_path_obj = Path(project_path).expanduser()
         is_valid, errors, warnings = validate_project_structure(str(project_path_obj))
 
         if project_path_obj.exists() and project_path_obj.is_dir():
@@ -867,9 +884,9 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   python3 scripts/project_manager.py init demo --format ppt169
-  python3 scripts/project_manager.py import-sources projects/demo file.md --move
-  python3 scripts/project_manager.py validate projects/demo
-  python3 scripts/project_manager.py info projects/demo
+  python3 scripts/project_manager.py import-sources ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD file.md --move
+  python3 scripts/project_manager.py validate ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD
+  python3 scripts/project_manager.py info ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD
 """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

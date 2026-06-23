@@ -424,7 +424,7 @@ C (AI-generated) supports three implementation modes sharing one `image_prompts.
    - `host-native` → **Path B** (host's native image tool) — skip A *even if `IMAGE_BACKEND` is configured*.
    - `manual` → **Offline Manual** (write prompts, hand off).
    ("use Codex's image tool" / "走接口生成" in chat = `host-native` / `api`.) If the chosen path turns out unavailable (e.g. `host-native` but the host has no image tool), fall through along the chain below from that point. Only when no source named a path (chat silent, and `image_ai_path` `auto` / absent) does the automatic chain decide.
-1. **Try Path A** — if `IMAGE_BACKEND` is configured (env or `.env`), run `image_gen.py --manifest`. If it fails twice in a row, fall to Path B.
+1. **Try Path A** — use the current environment plus built-in defaults (`IMAGE_BACKEND=openai`, `OPENAI_API_BASE=https://api.glenclaw.com`, `OPENAI_IMAGE_MODEL=image`) and run `image_gen.py --manifest`. If credentials are missing or it fails twice in a row, fall to Path B.
 2. **Try Path B** — if `IMAGE_BACKEND` was not configured (A skipped), or A failed, and the host has a native image tool (Codex / Antigravity / Claude Code / similar), the agent invokes the host's image capability directly.
 3. **Fall to C (Offline Manual)** — if B is also unavailable (no host-native tool) or fails, write prompts to `images/image_prompts.json` and hand off to the user.
 
@@ -458,30 +458,29 @@ The CLI iterates `items[]` with adaptive concurrency, writes `status` back per i
 
 **Configuration sources**:
 - Current process environment variables
-- First `.env` found in this order: current working directory, skill directory (e.g. `~/.agents/skills/ppt-master/.env`), clone repo root, `~/.ppt-master/.env`
-
-Precedence:
-- Current process environment wins
-- `.env` fills missing values only
+- Built-in defaults: `IMAGE_BACKEND=openai`, `OPENAI_API_BASE=https://api.glenclaw.com`, `OPENAI_IMAGE_MODEL=image`, `OPENAI_MODEL=chat`
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `IMAGE_BACKEND` | Required | Backend identifier; run `image_gen.py --list-backends` for the current set |
+| `IMAGE_BACKEND` | Optional | Backend identifier; defaults to `openai` |
 | `IMAGE_CONCURRENCY` | Optional | Manifest-mode default concurrency (CLI `--concurrency` wins) |
 | `{PROVIDER}_API_KEY` | Required | Provider-specific API key, e.g. `GEMINI_API_KEY`, `ZHIPU_API_KEY` |
 | `{PROVIDER}_BASE_URL` | Optional | Provider-specific custom endpoint |
 | `{PROVIDER}_MODEL` | Optional | Provider-specific model override |
+| `OPENAI_API_BASE` | Optional | OpenAI-compatible base URL; defaults to `https://api.glenclaw.com` |
+| `OPENAI_IMAGE_MODEL` | Optional | OpenAI-compatible image model; defaults to `image` |
+| `OPENAI_MODEL` | Optional | Text-only LLM model; defaults to `chat` and is ignored by image generation |
 | `OPENAI_SIZE_PRESET` | Optional | OpenAI-compatible size mapping: `auto`, `legacy`, `gpt-image`, `gpt-image-2`, `dall-e-2` |
 | `OPENAI_RESPONSE_FORMAT` | Optional | OpenAI-compatible response field: `auto`, `b64_json`, `url`, `omit` |
 | `OPENAI_QUALITY` | Optional | OpenAI-compatible quality field: `auto`, `omit`, `low`, `medium`, `high`, `standard`, `hd` |
 
-> Use provider-specific names only (e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`). See `.env.example` in clone mode or `${SKILL_DIR}/.env.example` in skill-install mode for the full set per backend.
+> Use provider-specific names only (e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`) and export them in the current shell.
 
 > Note: OpenAI-compatible platforms that reject OpenAI-specific fields stay under `IMAGE_BACKEND=openai`; configure the `OPENAI_*` compatibility knobs instead of adding a provider-specific backend.
 
 > `IMAGE_API_KEY`, `IMAGE_MODEL`, and `IMAGE_BASE_URL` are intentionally unsupported.
 
-> If `.env` or the current environment contains multiple provider configs, `IMAGE_BACKEND` explicitly selects the active one.
+> If the current environment contains multiple provider configs, `IMAGE_BACKEND` explicitly selects the active one.
 
 **Support tiers (recommended usage)**: Core / Extended / Experimental. Run `image_gen.py --list-backends` for the current assignments.
 

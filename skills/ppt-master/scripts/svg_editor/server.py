@@ -9,9 +9,9 @@ Usage:
     python3 scripts/svg_editor/server.py <project_dir>
 
 Examples:
-    python3 scripts/svg_editor/server.py projects/my-project
-    python3 scripts/svg_editor/server.py projects/my-project --port 8080
-    python3 scripts/svg_editor/server.py projects/my-project --live
+    python3 scripts/svg_editor/server.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD
+    python3 scripts/svg_editor/server.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD --port 8080
+    python3 scripts/svg_editor/server.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD --live
 
 Dependencies:
     flask>=3.0.0

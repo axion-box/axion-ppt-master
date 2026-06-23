@@ -11,7 +11,7 @@ Usage:
     python3 scripts/pptx_intake.py <source.pptx> -o <output_dir>
 
 Examples:
-    python3 scripts/pptx_intake.py deck.pptx -o projects/demo/analysis
+    python3 scripts/pptx_intake.py deck.pptx -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/analysis
 
 Dependencies:
     None beyond the repository scripts used for PPTX parsing.

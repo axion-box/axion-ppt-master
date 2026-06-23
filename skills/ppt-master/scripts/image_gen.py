@@ -4,7 +4,7 @@ Unified Image Generation Tool
 
 Dispatches to the appropriate backend based on explicit provider configuration.
 
-Backend selection (`IMAGE_BACKEND` in `.env` or the current process environment):
+Backend selection (environment variables only):
   IMAGE_BACKEND=gemini      -> Gemini backend (google-genai SDK)
   IMAGE_BACKEND=openai      -> OpenAI-compatible backend (raw HTTP via requests)
   IMAGE_BACKEND=minimax     -> MiniMax image backend
@@ -20,20 +20,21 @@ Backend selection (`IMAGE_BACKEND` in `.env` or the current process environment)
   IMAGE_BACKEND=replicate   -> Replicate backend
   IMAGE_BACKEND=openrouter  -> OpenRouter backend
 
-Configuration source (process env wins, `.env` is the fallback layer):
+Configuration source:
   1. Current process environment variables
-  2. The first `.env` found among:
-     - Current working directory
-     - Skill directory (e.g. `~/.agents/skills/ppt-master/.env`)
-     - Repo root (when running from a clone)
-     - `~/.ppt-master/.env` (user-level config)
+  2. Built-in defaults for the OpenAI-compatible path:
+     IMAGE_BACKEND=openai
+     OPENAI_API_BASE=https://api.glenclaw.com
+     OPENAI_API_KEY=
+     OPENAI_IMAGE_MODEL=image
+     OPENAI_MODEL=chat   (text LLMs only; ignored by image generation)
 
 Supported keys:
   IMAGE_BACKEND    (required) backend name
 
   Provider-specific keys are used for credentials and overrides, for example:
     GEMINI_API_KEY / GEMINI_MODEL / GEMINI_BASE_URL
-    OPENAI_API_KEY / OPENAI_MODEL / OPENAI_BASE_URL
+    OPENAI_API_KEY / OPENAI_IMAGE_MODEL / OPENAI_API_BASE
     QWEN_API_KEY / QWEN_MODEL / QWEN_BASE_URL
     ZHIPU_API_KEY / ZHIPU_MODEL / ZHIPU_BASE_URL
 
@@ -53,29 +54,7 @@ import threading
 import time
 from pathlib import Path
 
-from config import load_prefixed_env_file, resolve_env_path
-
-ENV_PATH = resolve_env_path()
-IMAGE_ENV_PREFIXES = (
-    "IMAGE_",
-    "GEMINI_",
-    "OPENAI_",
-    "MINIMAX_",
-    "STABILITY_",
-    "BFL_",
-    "IDEOGRAM_",
-    "QWEN_",
-    "DASHSCOPE_",
-    "ZHIPU_",
-    "BIGMODEL_",
-    "VOLCENGINE_",
-    "ARK_",
-    "MODELSCOPE_",
-    "SILICONFLOW_",
-    "FAL_",
-    "REPLICATE_",
-    "OPENROUTER_",
-)
+from config import apply_runtime_env_defaults
 DEPRECATED_IMAGE_KEYS = {
     "IMAGE_API_KEY",
     "IMAGE_MODEL",
@@ -105,7 +84,7 @@ BACKEND_REGISTRY = {
         "module": "backend_openai",
         "tier": "core",
         "label": "OpenAI / OpenAI-compatible",
-        "default_model": "gpt-image-2",
+        "default_model": "image",
         "key_hint": "OPENAI_API_KEY",
         "aliases": ["openai-compatible", "openai_compatible"],
     },
@@ -207,28 +186,6 @@ BACKEND_REGISTRY = {
 TIER_ORDER = {"core": 0, "extended": 1, "experimental": 2}
 SUPPORTED_BACKENDS = tuple(sorted(BACKEND_REGISTRY))
 
-
-def _load_image_env_file() -> None:
-    """
-    Load image generation config from the resolved `.env` as a fallback layer.
-
-    Existing process environment variables win over `.env`.
-    """
-    replacements = {
-        "IMAGE_API_KEY": "GEMINI_API_KEY / OPENAI_API_KEY / QWEN_API_KEY / ZHIPU_API_KEY / ...",
-        "IMAGE_MODEL": "GEMINI_MODEL / OPENAI_MODEL / QWEN_MODEL / ZHIPU_MODEL / ...",
-        "IMAGE_BASE_URL": "GEMINI_BASE_URL / OPENAI_BASE_URL / QWEN_BASE_URL / ZHIPU_BASE_URL / ...",
-    }
-    deprecated_messages = {
-        key: (
-            "Global image config keys have been removed.\n"
-            f"Use IMAGE_BACKEND plus provider-specific keys instead, such as {replacement}."
-        )
-        for key, replacement in replacements.items()
-    }
-    load_prefixed_env_file(IMAGE_ENV_PREFIXES, deprecated_keys=deprecated_messages)
-
-
 def _validate_runtime_config() -> None:
     """Reject deprecated global image variables from any configuration source."""
     for key in DEPRECATED_IMAGE_KEYS:
@@ -236,8 +193,8 @@ def _validate_runtime_config() -> None:
             continue
         replacement = {
             "IMAGE_API_KEY": "GEMINI_API_KEY / OPENAI_API_KEY / QWEN_API_KEY / ZHIPU_API_KEY / ...",
-            "IMAGE_MODEL": "GEMINI_MODEL / OPENAI_MODEL / QWEN_MODEL / ZHIPU_MODEL / ...",
-            "IMAGE_BASE_URL": "GEMINI_BASE_URL / OPENAI_BASE_URL / QWEN_BASE_URL / ZHIPU_BASE_URL / ...",
+            "IMAGE_MODEL": "GEMINI_MODEL / OPENAI_IMAGE_MODEL / QWEN_MODEL / ZHIPU_MODEL / ...",
+            "IMAGE_BASE_URL": "GEMINI_BASE_URL / OPENAI_API_BASE / QWEN_BASE_URL / ZHIPU_BASE_URL / ...",
         }[key]
         raise ValueError(
             f"Unsupported image config key: {key}\n"
@@ -299,7 +256,7 @@ def _print_backend_list() -> None:
             )
         print()
     print("Recommendation: prefer CORE backends for everyday PPT generation.")
-    print(f"Config fallback file: {ENV_PATH}")
+    print("Defaults: IMAGE_BACKEND=openai, OPENAI_API_BASE=https://api.glenclaw.com, OPENAI_IMAGE_MODEL=image")
 
 
 def _resolve_backend() -> tuple[object, str]:
@@ -327,15 +284,15 @@ def _resolve_backend() -> tuple[object, str]:
         "image tool directly with the prompts from images/image_prompts.json and save\n"
         "the outputs to images/<filename>. See references/image-generator.md §7 Path B.\n"
         "\n"
-        "To use Path A instead, set IMAGE_BACKEND in one of these places:\n"
-        f"  1. Current process environment\n"
-        f"  2. {ENV_PATH}\n"
+        "To use Path A instead, set the needed environment variables in the current shell.\n"
         "\n"
         f"Supported backends: {supported}\n"
         "\n"
         "Example:\n"
         "  IMAGE_BACKEND=openai\n"
+        "  OPENAI_API_BASE=https://api.glenclaw.com\n"
         "  OPENAI_API_KEY=sk-xxx\n"
+        "  OPENAI_IMAGE_MODEL=image\n"
     )
     sys.exit(1)
 
@@ -705,14 +662,15 @@ def main() -> None:
         print(f"Rendered Markdown sidecar: {md_path}")
         return
 
+    apply_runtime_env_defaults()
+
     try:
-        _load_image_env_file()
         _validate_runtime_config()
     except ValueError as e:
         print(f"Error: {e}")
         sys.exit(1)
 
-    # CLI --backend overrides the value loaded from .env
+    # CLI --backend overrides the environment default.
     if args.backend:
         os.environ["IMAGE_BACKEND"] = args.backend
 

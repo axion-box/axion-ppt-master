@@ -13,8 +13,8 @@ Usage:
     python3 scripts/beautify_inventory.py <slide_library.json> [--images <image_manifest.json>] [-o inventory.json]
 
 Examples:
-    python3 scripts/beautify_inventory.py projects/x/analysis/<stem>.slide_library.json \
-        --images projects/x/images/image_manifest.json -o projects/x/analysis/beautify_inventory.json
+    python3 scripts/beautify_inventory.py ~/项目/YYYY-mm/x_ppt169_YYYYMMDD/analysis/<stem>.slide_library.json \
+        --images ~/项目/YYYY-mm/x_ppt169_YYYYMMDD/images/image_manifest.json -o ~/项目/YYYY-mm/x_ppt169_YYYYMMDD/analysis/beautify_inventory.json
 
 Dependencies:
     None (standard library only).

@@ -16,8 +16,8 @@ Usage:
     python3 scripts/icon_sync.py <project_path> <lib/name> [<lib/name> ...]
 
 Examples:
-    python3 scripts/icon_sync.py projects/deck chunk-filled/home tabler-outline/chart
-    python3 scripts/icon_sync.py projects/deck simple-icons/github
+    python3 scripts/icon_sync.py ~/项目/YYYY-mm/deck_ppt169_YYYYMMDD chunk-filled/home tabler-outline/chart
+    python3 scripts/icon_sync.py ~/项目/YYYY-mm/deck_ppt169_YYYYMMDD simple-icons/github
 
 Dependencies:
     None (standard library only).

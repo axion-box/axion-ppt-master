@@ -136,7 +136,7 @@ def generate(prompt: str,
     """Generate an image with retries using the ModelScope backend."""
     api_key = require_api_key(
         "MODELSCOPE_API_KEY",
-        message="No API key found. Set MODELSCOPE_API_KEY in the current environment or the project-root .env.",
+        message="No API key found. Set MODELSCOPE_API_KEY in the current environment.",
     )
     base_url = os.environ.get("MODELSCOPE_BASE_URL") or DEFAULT_ENDPOINT
     resolved_model = model or os.environ.get("MODELSCOPE_MODEL") or DEFAULT_MODEL
@@ -165,4 +165,3 @@ def generate(prompt: str,
             time.sleep(delay)
 
     raise RuntimeError(f"Failed after {max_retries + 1} attempts. Last error: {last_error}")
-
