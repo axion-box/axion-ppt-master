@@ -6,7 +6,7 @@ Checks the structural integrity and compliance of multiple projects at once.
 
 Usage:
     python3 scripts/batch_validate.py examples
-    python3 scripts/batch_validate.py ~/项目
+    python3 scripts/batch_validate.py ~/ppt
     python3 scripts/batch_validate.py --all
     python3 scripts/batch_validate.py examples projects
 """

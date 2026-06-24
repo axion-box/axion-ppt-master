@@ -68,7 +68,7 @@ Batch-check project structure and compliance.
 
 ```bash
 python3 scripts/batch_validate.py examples
-python3 scripts/batch_validate.py examples ~/项目
+python3 scripts/batch_validate.py examples ~/ppt
 python3 scripts/batch_validate.py --all
 python3 scripts/batch_validate.py examples --export
 ```
