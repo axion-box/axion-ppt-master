@@ -1,15 +1,11 @@
 ---
 name: ppt-master
-description: >
-  AI-driven multi-format SVG content generation system. Converts source documents
-  (PDF/DOCX/URL/Markdown) into high-quality SVG pages and exports to PPTX through
-  multi-role collaboration. Use when user asks to "create PPT", "make presentation",
-  "生成PPT", "做PPT", "制作演示文稿", or mentions "ppt-master".
+description: End-to-end presentation generation skill. Use when the user asks to create a PPT / presentation / 演示文稿, or mentions "ppt-master".
 ---
 
 # PPT Master Skill
 
-> AI-driven multi-format SVG content generation system. Converts source documents into high-quality SVG pages through multi-role collaboration and exports to PPTX.
+> Convert source materials into SVG pages, review them in a strict serial workflow, and export to PPTX.
 
 **Core Pipeline**: `Source Document → Create Project → [Template] → Strategist → [Image_Generator] → Executor Live Preview → Quality Check → Post-processing → Export`
 
