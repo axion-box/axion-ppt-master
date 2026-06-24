@@ -74,14 +74,14 @@ python3 ${SKILL_DIR}/scripts/source_to_md/web_to_md.py <URL>
 
 ## Step 3: Save materials
 
-Two artifacts under `~/项目/YYYY-mm/`:
+Two artifacts under `~/ppt/YYYY-mm/`:
 
 | Artifact | Path |
 |---|---|
-| Research document | `~/项目/YYYY-mm/<topic_slug>.md` |
-| Image folder | `~/项目/YYYY-mm/<topic_slug>/` |
+| Research document | `~/ppt/YYYY-mm/<topic_slug>.md` |
+| Image folder | `~/ppt/YYYY-mm/<topic_slug>/` |
 
-**Hard rule — naming**: filename (without `.md`) and folder name MUST match. **Hard rule — location**: under `~/项目/YYYY-mm/`, never the repository root.
+**Hard rule — naming**: filename (without `.md`) and folder name MUST match. **Hard rule — location**: under `~/ppt/YYYY-mm/`, never the repository root.
 
 **Document structure** — section layout follows the topic: person → biography / works / impact; technology → background / mechanism / applications / outlook; company → overview / products / market / culture. The file MUST end with a `## Sources` section listing the URLs used.
 
@@ -97,8 +97,8 @@ Two artifacts under `~/项目/YYYY-mm/`:
 | Filename | descriptive English snake_case (`joe_hisaishi_concert.jpg`, not `image1.jpg`) |
 
 ```bash
-mkdir -p "~/项目/YYYY-mm/<topic_slug>"
-curl -L -o "~/项目/YYYY-mm/<topic_slug>/<descriptive_name>.<ext>" "<image_url>"
+mkdir -p "~/ppt/YYYY-mm/<topic_slug>"
+curl -L -o "~/ppt/YYYY-mm/<topic_slug>/<descriptive_name>.<ext>" "<image_url>"
 ```
 
 ---
@@ -109,11 +109,11 @@ Output a checkpoint, then continue with the main pipeline. The artifacts feed di
 
 ```markdown
 ## ✅ Topic Research Complete
-- [x] Document: `~/项目/YYYY-mm/<topic_slug>.md` (N sections)
-- [x] Images: `~/项目/YYYY-mm/<topic_slug>/` (N files)
+- [x] Document: `~/ppt/YYYY-mm/<topic_slug>.md` (N sections)
+- [x] Images: `~/ppt/YYYY-mm/<topic_slug>/` (N files)
 - [ ] **Next**: SKILL.md Step 2 →
   `project_manager.py init <project_name> --format <format>`
-  `project_manager.py import-sources ~/项目/YYYY-mm/<project_name> ~/项目/YYYY-mm/<topic_slug>.md ~/项目/YYYY-mm/<topic_slug>/*.* --move`
+  `project_manager.py import-sources ~/ppt/YYYY-mm/<project_name> ~/ppt/YYYY-mm/<topic_slug>.md ~/ppt/YYYY-mm/<topic_slug>/*.* --move`
 ```
 
-`<project_name>` is the user's chosen project identifier (typically `<format>_<topic_slug>`, e.g. `ppt169_joe_hisaishi`); `--move` removes the research artifacts from `~/项目/YYYY-mm/<topic_slug>` after they are imported.
+`<project_name>` is the user's chosen project identifier (typically `<format>_<topic_slug>`, e.g. `ppt169_joe_hisaishi`); `--move` removes the research artifacts from `~/ppt/YYYY-mm/<topic_slug>` after they are imported.

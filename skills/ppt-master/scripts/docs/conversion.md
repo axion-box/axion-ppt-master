@@ -141,7 +141,7 @@ than replacing it: Markdown remains the normalized content source, while intake
 artifacts provide source facts for Strategist and standalone PPTX workflows.
 
 ```bash
-python3 scripts/pptx_intake.py deck.pptx -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/analysis
+python3 scripts/pptx_intake.py deck.pptx -o ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/analysis
 ```
 
 Outputs (per source deck, prefixed by file stem):
@@ -179,8 +179,8 @@ block Python's default TLS fingerprint. No extra flags needed. If
 Fix image EXIF orientation in downloaded or imported assets.
 
 ```bash
-python3 scripts/rotate_images.py auto ~/项目/YYYY-mm/xxx_files
-python3 scripts/rotate_images.py gen ~/项目/YYYY-mm/xxx_files
+python3 scripts/rotate_images.py auto ~/ppt/YYYY-mm/xxx_files
+python3 scripts/rotate_images.py gen ~/ppt/YYYY-mm/xxx_files
 python3 scripts/rotate_images.py fix fixes.json
 ```
 

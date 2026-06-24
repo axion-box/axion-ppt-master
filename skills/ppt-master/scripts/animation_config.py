@@ -10,9 +10,9 @@ Usage:
     python3 scripts/animation_config.py validate <project_path>
 
 Examples:
-    python3 scripts/animation_config.py scaffold ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD --force
-    python3 scripts/animation_config.py list-groups ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD
-    python3 scripts/animation_config.py validate ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD
+    python3 scripts/animation_config.py scaffold ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD --force
+    python3 scripts/animation_config.py list-groups ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD
+    python3 scripts/animation_config.py validate ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD
 
 Dependencies:
     None (standard library only)

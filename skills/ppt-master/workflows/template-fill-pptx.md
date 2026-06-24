@@ -41,7 +41,7 @@ If the content material is only a topic with no supporting facts, gather or ask 
 
 ## Step 2: Create the Project Workspace
 
-Create a dedicated project directory under `~/项目/YYYY-mm/`. Do not write outputs directly into that workspace root.
+Create a dedicated project directory under `~/ppt/YYYY-mm/`. Do not write outputs directly into that workspace root.
 
 ```bash
 mkdir -p "<project_dir>/sources" "<project_dir>/analysis" "<project_dir>/exports" "<project_dir>/validation"
@@ -118,7 +118,7 @@ The plan structure:
 ```json
 {
   "schema": "template_fill_pptx_plan.v1",
-  "source_pptx": "~/项目/YYYY-mm/source.pptx",
+  "source_pptx": "~/ppt/YYYY-mm/source.pptx",
   "slides": [
     {
       "source_slide": 1,

@@ -14,13 +14,13 @@ Principle:
 
 Usage:
     python3 scripts/svg_finalize/fix_image_aspect.py <svg_file> [svg_file2] ...
-    python3 scripts/svg_finalize/fix_image_aspect.py ~/项目/YYYY-mm/<project>/svg_output/*.svg
+    python3 scripts/svg_finalize/fix_image_aspect.py ~/ppt/YYYY-mm/<project>/svg_output/*.svg
 
     # Preview mode
-    python3 scripts/svg_finalize/fix_image_aspect.py --dry-run ~/项目/YYYY-mm/<project>/svg_output/*.svg
+    python3 scripts/svg_finalize/fix_image_aspect.py --dry-run ~/ppt/YYYY-mm/<project>/svg_output/*.svg
 
 Examples:
-    python3 scripts/svg_finalize/fix_image_aspect.py ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/svg_output/slide_06_current_overview.svg
+    python3 scripts/svg_finalize/fix_image_aspect.py ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/svg_output/slide_06_current_overview.svg
 """
 
 import os
@@ -330,7 +330,7 @@ Examples:
   %(prog)s slide_01.svg                    # Process a single file
   %(prog)s *.svg                           # Process all SVGs in current directory
   %(prog)s --dry-run *.svg                 # Preview files to be processed
-  %(prog)s ~/项目/YYYY-mm/<project>/svg_output/*.svg   # Process project directory
+  %(prog)s ~/ppt/YYYY-mm/<project>/svg_output/*.svg   # Process project directory
         '''
     )
     parser.add_argument('files', nargs='+', help='SVG files to process')

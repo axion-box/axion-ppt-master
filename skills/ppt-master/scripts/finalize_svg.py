@@ -20,7 +20,7 @@ Usage:
     python3 scripts/finalize_svg.py <project_directory> --only embed-icons fix-rounded
 
 Examples:
-    python3 scripts/finalize_svg.py ~/项目/YYYY-mm/my_project_ppt169_YYYYMMDD
+    python3 scripts/finalize_svg.py ~/ppt/YYYY-mm/my_project_ppt169_YYYYMMDD
     python3 scripts/finalize_svg.py examples/ppt169_demo --only embed-icons
 
 Processing options:
@@ -267,9 +267,9 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
-  %(prog)s ~/项目/YYYY-mm/my_project_ppt169_YYYYMMDD           # Execute all processing (default)
-  %(prog)s ~/项目/YYYY-mm/my_project_ppt169_YYYYMMDD --only embed-icons fix-rounded
-  %(prog)s ~/项目/YYYY-mm/my_project_ppt169_YYYYMMDD -q        # Quiet mode
+  %(prog)s ~/ppt/YYYY-mm/my_project_ppt169_YYYYMMDD           # Execute all processing (default)
+  %(prog)s ~/ppt/YYYY-mm/my_project_ppt169_YYYYMMDD --only embed-icons fix-rounded
+  %(prog)s ~/ppt/YYYY-mm/my_project_ppt169_YYYYMMDD -q        # Quiet mode
 
 Processing options (for --only):
   embed-icons   Embed icons

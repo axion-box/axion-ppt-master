@@ -10,8 +10,8 @@ Usage:
     python3 scripts/check_annotations.py <svg_file>
 
 Examples:
-    python3 scripts/check_annotations.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD
-    python3 scripts/check_annotations.py ~/项目/YYYY-mm/my-project_ppt169_YYYYMMDD/svg_output/slide_01.svg
+    python3 scripts/check_annotations.py ~/ppt/YYYY-mm/my-project_ppt169_YYYYMMDD
+    python3 scripts/check_annotations.py ~/ppt/YYYY-mm/my-project_ppt169_YYYYMMDD/svg_output/slide_01.svg
 
 Dependencies:
     None (only uses standard library)

@@ -12,8 +12,8 @@ Usage:
     python3 scripts/latex_render.py <project_path> --dry-run
 
 Examples:
-    python3 scripts/latex_render.py ~/项目/YYYY-mm/demo_ppt169_20260523
-    python3 scripts/latex_render.py ~/项目/YYYY-mm/demo_ppt169_20260523 --providers codecogs,quicklatex,mathpad,wikimedia
+    python3 scripts/latex_render.py ~/ppt/YYYY-mm/demo_ppt169_20260523
+    python3 scripts/latex_render.py ~/ppt/YYYY-mm/demo_ppt169_20260523 --providers codecogs,quicklatex,mathpad,wikimedia
 
 Dependencies:
     Pillow (for measuring generated PNG dimensions)

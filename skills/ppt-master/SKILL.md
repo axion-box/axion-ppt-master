@@ -41,6 +41,16 @@ description: >
 > - Do NOT create `.worktrees/`, `tests/`, branch workflows, or generic engineering structure by default
 > - On conflict with a generic coding skill, follow this skill unless the user explicitly says otherwise
 
+> [!IMPORTANT]
+> ## 🎯 Visual Planning Rule
+>
+> - **Single-focus pages are NOT default bullet pages**. When a page exists primarily to land one topic, event, person, concept, mechanism, or argument, the Strategist MUST first evaluate whether the idea should be carried by a visual spine rather than by text blocks alone.
+> - **Documentary / factual subjects** — news, history, people, places, real products, real-world scenes: prefer real imagery (`user` / `web`) so the page gains recognizability, context, and atmosphere.
+> - **Conceptual / explanatory subjects** — mathematical concepts, scientific laws, algorithms, workflows, systems, architectures: prefer native SVG diagrams, chart-library structures, or schematic overlays; do NOT rely on AI raster images to carry precise logic, labels, or relationships.
+> - **Abstract claims / transitions / emotional statements**: prefer AI-generated hero visuals, object-metaphor scenes, or atmosphere-led compositions; typographic-impact pages are the fallback when imagery is unnecessary or would weaken the idea.
+> - **Visualizable comparisons**: prefer side-by-side panels, small multiples, annotated comparisons, or before/after structures instead of parallel bullet lists when the contrast can be seen.
+> - **Hard rule**: if a page's core message can be made clearer through a visual spine, do NOT leave it as a plain title + bullets page by default.
+
 ## Main Pipeline Scripts
 
 | Script | Purpose |
@@ -312,6 +322,23 @@ Read references/strategist.md
 
 **Channel ownership — read each fact once from its owning channel.** In the main pipeline the **content contract is the Markdown** (`sources/<stem>.md`): text, tables, and chart data values all come from there (`ppt_to_md` now transcribes native chart data into Markdown tables). The `analysis/` chart / table entries are a **structural digest** for outline decisions (which slides carried charts, type, series names) — not a second copy of the values; do NOT also pull chart values from `<stem>.slide_library.json` in the main pipeline. The `<stem>.slide_library.json` full structured data is owned by the direct-PPTX workflows: template-fill uses it as the native fill contract; beautify uses it for native chart / table data while keeping slide text from the Markdown.
 
+**Single-focus page planning (Mandatory)**: before presenting the Eight Confirmations and before writing `design_spec.md`, the Strategist MUST classify each likely page by what should carry its message — text, real imagery, native diagram, hero visual, or comparison structure. Do NOT default every content page to text blocks. Use this decision table:
+
+| Page subject | Default visual treatment | Resource consequence |
+|---|---|---|
+| News, history, people, places, real products, real-world scenes | Real-image-supported page | Add `user` / `web` rows in `§VIII Image Resource List` |
+| Mathematical concepts, scientific laws, algorithms, workflows, systems, architectures | Diagram-led / schematic page | Prefer `§VII Visualization Reference List` + native SVG explanation; use images only as atmosphere or support |
+| Abstract claims, emotional pivots, chapter turns, big takeaways | AI-generated hero visual / atmosphere-led page | Usually lock `page_rhythm` toward `breathing` or `anchor`; typographic-impact-only is the fallback; avoid multi-card grids |
+| Visualizable comparisons, before/after, option A/B, same-object variants | Side-by-side panels / small multiples / annotated comparison | Record the image or visualization structure explicitly in `§VII` / `§VIII` |
+
+**Hard rule**: if a page exists to explain **one** thing and that thing is meaningfully visualizable, do NOT leave it as a plain title + bullets page by default.
+
+**Hard rule**: explanatory precision stays in native SVG. When the page depends on exact labels, formula structure, arrows, steps, topology, or quantitative relationships, AI imagery may provide atmosphere or a scene, but the explanation itself MUST remain editable SVG.
+
+**Mandatory recording**: when a page is planned as image-supported, diagram-led, hero-visual, or comparison-led, the Strategist MUST encode that decision in the spec artifacts — `§VII` for visualization references, `§VIII` for image rows, `§IX` for the page's layout/core-message treatment, and `spec_lock.md page_rhythm` for the page-density consequence.
+
+**Hard rule**: if a page is marked `breathing`, avoid filling it with multiple equal-weight text cards; it should usually have one dominant visual or conceptual focal point.
+
 **Eight Confirmations** (full template: `templates/design_spec_reference.md`):
 
 ⛔ **BLOCKING**: present the Eight Confirmations and **wait for explicit user confirmation or modification** before outputting Design Specification & Content Outline. This is the single core confirmation gate — once the final confirmation lands, all subsequent steps proceed automatically. The default Confirm UI delivers the gate in **two tiers** (anchors → re-derive → realization; see below); the chat fallback mirrors the same two steps.
@@ -390,8 +417,8 @@ The page is a **confirmation surface only** — Strategist still authors every r
 
 | Signal read | Line content |
 |---|---|
-| Heavy (long page count / bulky sources / heavy web-fetch accumulation) | State estimated page count and large source size; recommend switching to [split mode](workflows/resume-execute.md) after Step 5 — stop this chat, open a fresh window and input `继续生成 ~/项目/YYYY-mm/<project_name>` to enter Phase B (SVG generation + export); no response or "continue" = default continuous mode. |
-| Normal (default) | State scale is moderate, default continuous mode generates in one go; if mid-way window switch is desired, input `继续生成 ~/项目/YYYY-mm/<project_name>` after Step 5 to switch to [split mode](workflows/resume-execute.md). |
+| Heavy (long page count / bulky sources / heavy web-fetch accumulation) | State estimated page count and large source size; recommend switching to [split mode](workflows/resume-execute.md) after Step 5 — stop this chat, open a fresh window and input `继续生成 ~/ppt/YYYY-mm/<project_name>` to enter Phase B (SVG generation + export); no response or "continue" = default continuous mode. |
+| Normal (default) | State scale is moderate, default continuous mode generates in one go; if mid-way window switch is desired, input `继续生成 ~/ppt/YYYY-mm/<project_name>` after Step 5 to switch to [split mode](workflows/resume-execute.md). |
 
 This line is required output every run — the user must always see the mode choice exists. Whether to act on it is the user's call. When the Confirm UI is used, this choice also appears as the in-page generation-mode toggle and is captured in `result.json` (`generation_mode`); the chat-summary fallback still prints this line.
 
@@ -495,7 +522,7 @@ Workflow:
   ## ✅ Phase A Complete
   - [x] Spec: `design_spec.md`, `spec_lock.md`
   - [x] Resources: `sources/`, `images/`, `templates/`
-  - [ ] **Next**: open a fresh chat window and input `继续生成 ~/项目/YYYY-mm/<project_name>` to enter Phase B via the [`resume-execute`](workflows/resume-execute.md) workflow.
+  - [ ] **Next**: open a fresh chat window and input `继续生成 ~/ppt/YYYY-mm/<project_name>` to enter Phase B via the [`resume-execute`](workflows/resume-execute.md) workflow.
   ```
 
 > On acquisition failure, do NOT halt — follow the Failure Handling rule in [image-base.md](references/image-base.md) §5: retry once, then mark the row `Needs-Manual`, report to user, and continue to the checkpoint above.

@@ -10,7 +10,7 @@ Usage:
     python3 scripts/gemini_watermark_remover.py <image_path> -o output_path.png
 
 Examples:
-    python3 scripts/gemini_watermark_remover.py ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images/bg_01.png
+    python3 scripts/gemini_watermark_remover.py ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images/bg_01.png
     python3 scripts/gemini_watermark_remover.py image.jpg -o image_clean.jpg
 
 Dependencies:
@@ -193,7 +193,7 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
-    %(prog)s ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images/bg_01.png
+    %(prog)s ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images/bg_01.png
     %(prog)s image.jpg -o image_clean.jpg
 
 Notes:

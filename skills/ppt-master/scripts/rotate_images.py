@@ -133,7 +133,7 @@ class ImageRotator:
         self.auto_fix_exif(target_path)
 
         # 2. Generate HTML
-        # Tool is generated in the parent workspace directory (for example ~/项目/YYYY-mm/)
+        # Tool is generated in the parent workspace directory (for example ~/ppt/YYYY-mm/)
         project_root = target_path.parent
         html_output_path = project_root / output_filename
 
@@ -152,7 +152,7 @@ class ImageRotator:
                     src_rel_path = f.relative_to(project_root).as_posix()
 
                     # path is used for JSON data, using path relative to the working directory (usually repo root)
-                    # e.g. "~/项目/YYYY-mm/Name/images/1.jpg"
+                    # e.g. "~/ppt/YYYY-mm/Name/images/1.jpg"
                     # We assume the script is run from the repo root, or target_path is already absolute
                     # The safest approach is to compute a path relative to the repo root (avoids CWD changes making fixes.json unusable)
                     try:
@@ -527,9 +527,9 @@ def build_parser() -> argparse.ArgumentParser:
         description="Manage image orientation and manual rotation fixes.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
-  python3 scripts/rotate_images.py gen ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
+  python3 scripts/rotate_images.py gen ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images
   python3 scripts/rotate_images.py fix fixes.json
-  python3 scripts/rotate_images.py auto ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
+  python3 scripts/rotate_images.py auto ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images
 """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

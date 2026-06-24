@@ -43,7 +43,7 @@ Unified image generation entry point.
 ```bash
 python3 scripts/image_gen.py "A modern futuristic workspace"
 python3 scripts/image_gen.py "Abstract tech background" --aspect_ratio 16:9 --image_size 4K
-python3 scripts/image_gen.py "Concept car" -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
+python3 scripts/image_gen.py "Concept car" -o ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images
 python3 scripts/image_gen.py "Beautiful landscape" -n "low quality, blurry, watermark"
 python3 scripts/image_gen.py --list-backends
 ```
@@ -167,7 +167,7 @@ Zero-config web image search across openly-licensed providers. Sister tool to `i
 ```bash
 python3 scripts/image_search.py "offshore wind farm" \
   --filename cover_bg.jpg --slide 01_cover \
-  --orientation landscape -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
+  --orientation landscape -o ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images
 ```
 
 For multiple web rows, `--batch images/image_queries.json` searches them concurrently (modest default, `--concurrency N` / `IMAGE_SEARCH_CONCURRENCY` to tune) instead of one call per row — the web sister of `image_gen.py --manifest`. Schema and status semantics: [`image-searcher.md`](../../references/image-searcher.md) §5.
@@ -204,12 +204,12 @@ Pin a provider, refuse attribution, or override the manifest path:
 # Pin Wikimedia
 python3 scripts/image_search.py "Olympics opening ceremony" \
   --filename event.jpg --provider wikimedia \
-  --orientation landscape -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
+  --orientation landscape -o ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images
 
 # Strict mode — refuse CC BY / CC BY-SA
 python3 scripts/image_search.py "abstract gradient" \
   --filename hero.jpg --strict-no-attribution \
-  -o ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD/images
+  -o ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD/images
 ```
 
 Output:

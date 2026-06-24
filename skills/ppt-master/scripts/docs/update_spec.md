@@ -23,13 +23,13 @@ One invocation = one change. The tool:
 
 ```bash
 # swap the primary color deck-wide (bare key → colors.primary)
-python3 skills/ppt-master/scripts/update_spec.py ~/项目/YYYY-mm/acme_ppt169_20260301 primary=#0066AA
+python3 skills/ppt-master/scripts/update_spec.py ~/ppt/YYYY-mm/acme_ppt169_20260301 primary=#0066AA
 
 # explicit section.key form
-python3 skills/ppt-master/scripts/update_spec.py ~/项目/YYYY-mm/acme_ppt169_20260301 colors.accent=#FF6B35
+python3 skills/ppt-master/scripts/update_spec.py ~/ppt/YYYY-mm/acme_ppt169_20260301 colors.accent=#FF6B35
 
 # change the deck-wide font family
-python3 skills/ppt-master/scripts/update_spec.py ~/项目/YYYY-mm/acme_ppt169_20260301 \
+python3 skills/ppt-master/scripts/update_spec.py ~/ppt/YYYY-mm/acme_ppt169_20260301 \
   'typography.font_family="Inter", Arial, sans-serif'
 ```
 

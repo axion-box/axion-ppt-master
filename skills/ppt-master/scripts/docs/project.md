@@ -16,9 +16,9 @@ python3 scripts/project_manager.py info <project_path>
 ```
 
 Notes:
-- Files outside `~/项目/` and outside the repo are copied into `sources/` by default
+- Files outside `~/ppt/` and outside the repo are copied into `sources/` by default
 - With `--move`, outside files are moved into `sources/`
-- Files already inside `~/项目/` are moved into `sources/` by default
+- Files already inside `~/ppt/` are moved into `sources/` by default
 - Files already inside the repo are also moved into `sources/` by default (with a stderr
   note), to avoid leaving unintended artifacts that could be committed by mistake.
   Pass `--copy` to force a copy for workspace/repo sources instead.
@@ -42,8 +42,8 @@ Examples:
 
 ```bash
 python3 scripts/project_manager.py init my_presentation --format ppt169
-python3 scripts/project_manager.py validate ~/项目/YYYY-mm/my_presentation_ppt169_20251116
-python3 scripts/project_manager.py info ~/项目/YYYY-mm/my_presentation_ppt169_20251116
+python3 scripts/project_manager.py validate ~/ppt/YYYY-mm/my_presentation_ppt169_20251116
+python3 scripts/project_manager.py info ~/ppt/YYYY-mm/my_presentation_ppt169_20251116
 ```
 
 ## `project_utils.py`

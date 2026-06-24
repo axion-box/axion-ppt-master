@@ -884,9 +884,9 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   python3 scripts/project_manager.py init demo --format ppt169
-  python3 scripts/project_manager.py import-sources ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD file.md --move
-  python3 scripts/project_manager.py validate ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD
-  python3 scripts/project_manager.py info ~/项目/YYYY-mm/demo_ppt169_YYYYMMDD
+  python3 scripts/project_manager.py import-sources ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD file.md --move
+  python3 scripts/project_manager.py validate ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD
+  python3 scripts/project_manager.py info ~/ppt/YYYY-mm/demo_ppt169_YYYYMMDD
 """,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
