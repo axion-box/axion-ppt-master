@@ -36,7 +36,7 @@ WORKFLOWS_DIR = PROJECT_ROOT / 'workflows'
 # Repository root directory
 REPO_ROOT = PROJECT_ROOT.parent.parent
 EXAMPLES_DIR = REPO_ROOT / 'examples'
-PROJECTS_DIR = Path.home() / '项目'
+PROJECTS_DIR = Path.home() / 'ppt'
 
 # Template subdirectories
 CHART_TEMPLATES_DIR = TEMPLATES_DIR / 'charts'
