@@ -161,17 +161,17 @@ narration 标记。
 | 只有主题，或现有材料缺少实现用户目标所需的事实 | Generate PPTX Step 1 内运行 `topic-research` | 只有主题时立即研究；有材料时先转换 / 阅读，只补已识别的事实缺口 |
 | 有源文件或对话文本，deck 结构可以重想 | Generate PPTX | Strategist 可以拆分、合并、删除、重排和重设计 |
 | 一张或多张图片中包含的页面画面需要变成分层可编辑幻灯片 | Generate PPTX + 图片还原为 PPTX（`image-to-pptx`）profile | 当前要求 Codex 且始终直接启用 Quick；先规范化全部页面画面，每个画面映射一张幻灯片；普通文字原生还原；低清 Logo / 图标 / 装饰只能在锁定身份、轮廓、比例、颜色和字标的前提下参考重建；chart / table / data graphic 禁止生成式重建，必须使用可核对数值的原生对象、精确源资产，或标记 `manual_required`；场景至少拆成干净背景层与人物 / 前景层；多个带 padding 包围盒且互不重叠的对象可共用一次生成 plate，再用 grid slice 或 SVG bbox crop 拆分；禁止相似替代和整页截图 skin |
-| 显式要求快速生成 | Generate PPTX + `quick-generate` profile | 按需转换 / 阅读来源、研究事实缺口并准备所需资源；用户明确提出的要求照做，其余内容、页结构、视觉与资源由当前 Agent 在上下文中决定，跳过 Strategist / 确认 / spec / lock / finalize，手写 SVG、通过一次无锁 final gate 后导出最终 PPTX |
+| 没有 Guided Default 升级条件的普通生成 | Generate PPTX + `quick-generate` profile | 按需转换 / 阅读来源；长本地文字在宿主支持时先压缩成一份有长度上限、带定位信息的 brief；研究事实缺口并准备所需资源；用户明确提出的要求照做，其余内容、页结构、视觉与资源由当前 Agent 在上下文中决定，跳过 Strategist / 确认 / spec / lock / finalize，手写 SVG、通过一次无锁 final gate 后导出最终 PPTX |
 | PPTX 作为源材料，用户允许重构故事和页结构 | Generate PPTX，经 `ppt_to_md` + `pptx_intake` | PPTX 身份和几何是事实与候选，不是复刻约束 |
 | 原生 PPTX 模板 + 新材料 / 新主题 | Fill Native PPTX（`template-fill-pptx`） | 克隆并填充原生页面；不生成 SVG |
-| 现有 PPTX，页数 / 页序 / 措辞 1:1 保留，只改善排版 | Generate PPTX + `beautify-pptx` profile | 内容和分页锁定；明确要求快速时走 Quick，否则走 Default |
+| 现有 PPTX，页数 / 页序 / 措辞 1:1 保留，只改善排版 | Generate PPTX + `beautify-pptx` profile | 内容和分页锁定；默认走 Quick，明确升级条件才走 Guided Default |
 | 已完成 PPTX，保持内容 / 布局稳定，只加讲稿、音频、计时、转场 | Enhance Native PPTX（`native-enhance-pptx`） | 直接 OOXML patch；不重新设计 |
 | 用户想从一个或多个 PPTX/SVG、图片/PDF、文档/网站、品牌资产、直接文字或混合参考材料包构建可复用模板工作区 | Create Template（`create-template`） | 固定入口读取每个适用证据通道，只分派一个 Create Brand、Create Style、Create Layout 或 Create Deck 子工作流，再返回作为 Generate Stage 1 候选的工作区根目录；结构型子工作流可导出审阅 PPTX |
-| Default Generate 进入规划；本次运行可能已带精确工作区 root 或 Create Template handoff | Generate PPTX Stage 1 | Step 3 只准备候选；Stage 1 同时确认沟通与自由设计/模板使用；普通请求默认自由设计，明确模板意图或任意 root 默认模板模式，且只有单 root 会预选；随后才安装供 Stage 2 读取 |
+| 用户明确要求独立策略/确认、交互式模板选择或预览/批注、spec/lock 治理，或可复用 Master/Layout 结构 | Guided Default Generate PPTX Stage 1 | Step 3 只准备候选；Stage 1 同时确认沟通与自由设计/模板使用；明确模板意图或任意 root 默认模板模式，且只有单 root 会预选；随后才安装供 Stage 2 读取 |
 | 用户要求调整对象级动画顺序 / 效果 / 计时 | Generate PPTX + `customize-animations` 阶段 | 通过 `animations.json` 控制可选导出策略 |
 | 用户要求预览、选择、注解或重导出浏览器编辑 | Generate PPTX + `live-preview` 阶段 | 注解只在规定交接点应用 |
 
-“优化这份 PPT”这类含糊请求归约为一个判定点：是否保留原始页数、页序和逐页措辞。两者都属于 Generate PPTX；保留时选择 `beautify-pptx` profile，允许重构时使用普通 profile。两种情况下都只在明确要求快速时选择 Quick，否则使用 Default。
+“优化这份 PPT”这类含糊请求归约为一个判定点：是否保留原始页数、页序和逐页措辞。两者都属于 Generate PPTX；保留时选择 `beautify-pptx` profile，允许重构时使用普通 profile。两种情况下都默认选择 Quick，只有明确升级条件才使用 Guided Default。
 
 ---
 

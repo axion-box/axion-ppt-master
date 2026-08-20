@@ -42,42 +42,44 @@ route selection. After selection, the active runtime authority owns execution.
 | Request condition | Generate-route behavior |
 |---|---|
 | One or more raster files represent page frames that must be reconstructed into a layered editable PPTX | Activate the Axion-supported [`image-to-pptx`](./profiles/image-to-pptx.md); normalize the represented frame roster and activate `quick-generate` directly without requiring a separate Quick request |
-| Existing PPTX must preserve wording, page count, and page order 1:1 | Activate [`beautify-pptx`](./profiles/beautify-pptx.md); it selects `quick-generate` when that profile's explicit trigger also matches, otherwise `generate-pptx` |
-| The effective delivery purpose is recorded, self-running, or video-directed | Inside the already selected Default or explicit Quick runtime, load [`video-design`](../references/video-design.md) before whole-solution/page planning. This is a conditional design reference, not a profile or fifth route; notes, animation, audio, and optional native MP4 remain owned by their existing stages |
-| Explicit quick/fast, skip-strategy, or direct SVG-to-PPTX intent without an active fidelity profile | Load [`quick-generate`](./profiles/quick-generate.md) directly without loading `generate-pptx.md`: prepare sources/resources as needed, let the current agent decide without interaction, directly apply at most one exact workspace root per kind supplied for this run, otherwise use free design, omit Strategist/Confirm UI/spec/lock, hand-author SVG, run the lockless final checker, and export the final PPTX |
+| Existing PPTX must preserve wording, page count, and page order 1:1 | Activate [`beautify-pptx`](./profiles/beautify-pptx.md), then use the runtime selected by the rules below |
+| The effective delivery purpose is recorded, self-running, or video-directed | Inside the already selected Quick or Guided Default runtime, load [`video-design`](../references/video-design.md) before whole-solution/page planning. This is a conditional design reference, not a profile or fifth route; notes, animation, audio, and optional native MP4 remain owned by their existing stages |
+| Ordinary Generate or Beautify with no Guided Default escalation trigger | Load [`quick-generate`](./profiles/quick-generate.md) directly without loading `generate-pptx.md`: prepare sources/resources as needed, let the current agent decide without interaction, directly apply at most one exact workspace root per kind supplied for this run, otherwise use free design, omit Strategist/Confirm UI/spec/lock, hand-author SVG, run the lockless final checker, and export the final PPTX |
+| User explicitly requests a separate strategy/design proposal before authoring, a confirmation gate, interactive template selection, live preview/annotation, `design_spec.md` / `spec_lock.md` / spec refinement, or reusable Master/Layout/placeholder compilation | Load [`generate-pptx`](./generate-pptx.md) as Guided Default and do not load Quick. Multiple candidate workspace roots that require comparison or selection also use this runtime |
 | Topic only, or supplied sources leave planning-critical factual gaps | Run [`topic-research`](./stages/topic-research.md) inside the selected Generate profile's source preparation: immediately for topic-only input, or after conversion and reading for source-backed input; research only the identified gaps |
-| Existing PPTX may be split, merged, dropped, reordered, or re-outlined | Treat the PPTX as source content through the selected Generate authority's source intake; continue Default unless explicit Quick intent selected that runtime |
-| Default Generate reaches planning | Step 3 prepares template candidates without interaction. Stage 1 then confirms the communication contract and free-design/template choice together; only a confirmed non-free choice runs [`apply-template-workspace`](./stages/apply-template-workspace.md) before Stage 2 |
+| Existing PPTX may be split, merged, dropped, reordered, or re-outlined | Treat the PPTX as source content through the selected Generate authority's source intake; use Quick unless a Guided Default escalation trigger matches |
+| Guided Default reaches planning | Step 3 prepares template candidates without interaction. Stage 1 then confirms the communication contract and free-design/template choice together; only a confirmed non-free choice runs [`apply-template-workspace`](./stages/apply-template-workspace.md) before Stage 2 |
 | Explicit current brand/style/layout/deck workspace root outside Image to PPTX | Default Generate preserves the exact path as a Stage-1 template candidate; Quick Generate validates and installs it directly without Steps 3–4 or Confirm UI. Classify it as `library` only when its normalized root exactly matches a registered index entry; otherwise retain `explicit`. Consume the workspace root, never only its inner `templates/` directory |
 | Split-mode project resumes in a fresh chat | Run [`resume-execute`](./stages/resume-execute.md) inside the active Generate route |
 | Existing generated project needs a deck-wide `colors.*` or universal `typography.font_family` substitution | Stay in Generate; load [`update_spec.py`](../scripts/docs/update_spec.md), honor its supported-key boundary, then rerun the final quality gate and Step 7 export |
 | User explicitly requests spec refinement | Run [`refine-spec`](./stages/refine-spec.md) after Design Spec Gate 1 and before lock Gate 2 |
 | Data charts exist | Run [`verify-charts`](./stages/verify-charts.md) before export |
 | User explicitly requests visual review | Run [`visual-review`](./stages/visual-review.md) before post-processing |
-| User requests preview, selection, or annotation application outside Image to PPTX | Use the default Generate pipeline and run [`live-preview`](./stages/live-preview.md) at the stage defined there; explicit Quick + preview intent falls back to default rather than dropping preview. Image to PPTX remains Quick-only and uses its mandatory canonical-frame recomposition comparison instead of this interactive stage |
+| User requests preview, selection, or annotation application outside Image to PPTX | Select Guided Default and run [`live-preview`](./stages/live-preview.md) at the stage defined there. Image to PPTX remains Quick-only and uses its mandatory canonical-frame recomposition comparison instead of this interactive stage |
 | User requests page transitions, auto-advance, or deck-wide animation settings without page-specific motion planning or an existing `animations.json` | Load [`animations`](../references/animations.md) and apply its export-level contract |
 | `<project_path>/animations.json` already exists, the user explicitly requests per-slide/object-level animation control, or the effective Custom Animations outcome in `design_spec.md §I` is enabled | Run [`customize-animations`](./stages/customize-animations.md) after the final SVG quality gate and any enabled speaker-note pass, before Generate Step 7. A §IX `Motion suggestion` informs an active pass but never triggers it alone |
 | Generate PPTX receives an explicit narration request or has effective Narration Audio enabled in `design_spec.md §I`; Enhance Native PPTX has a confirmed `audio.enabled: true` module | Run [`generate-audio`](./stages/generate-audio.md) after the owning route's notes/export readiness; Generate audio implies effective Speaker Notes enabled |
 
 **Hard rule — fidelity profiles, not fifth routes**: Image to PPTX and Beautify
 change different source/page invariants and are mutually exclusive. Image to
-PPTX always activates Quick; Beautify uses Quick only on explicit Quick intent
-and otherwise uses Default. Neither defines a separate artifact lifecycle or
-loads both runtimes.
+PPTX always activates Quick; Beautify follows the ordinary Quick-default /
+Guided-Default escalation rules. Neither defines a separate artifact lifecycle
+or loads both runtimes.
 
 **Hard rule — direct-generation profile, not a fifth route**: `quick-generate`
-stays inside Generate PPTX but owns an explicit SVG → PPTX short circuit. Page
-count alone never activates or blocks it. Conversion, bounded research, and
+stays inside Generate PPTX and is the ordinary default runtime. Page count,
+source length, narration, or animation alone never blocks it. Conversion,
+bounded research, and
 project-local resources remain available. Package capabilities may be requested
 or agent-selected. Quick may consume exact Brand/Style/Layout/Deck workspaces as
 flat authoring inputs, with at most one contribution per kind. All four kinds
 may combine; Layout takes structural precedence over Deck. A multi-kind project
-root contributes all of its specs atomically;
-compiling reusable Master/Layout/placeholder structure still requires the
-default lock-backed Generate pipeline. Once selected, Quick
-is the complete runtime procedure and never loads `generate-pptx.md`; Default
-never loads `quick-generate.md`. Image to PPTX is the narrow profile-owned
-Quick activation; Beautify may select either runtime, but never both.
+root contributes all of its specs atomically. Compiling reusable
+Master/Layout/placeholder structure still requires the Guided Default
+lock-backed Generate pipeline. Once selected, Quick is the complete runtime
+procedure and never loads `generate-pptx.md`; Guided Default never loads
+`quick-generate.md`. Image to PPTX is the narrow profile-owned Quick activation;
+Beautify may select either runtime, but never both.
 
 ---
 

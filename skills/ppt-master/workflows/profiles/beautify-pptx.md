@@ -1,5 +1,5 @@
 ---
-description: Generate profile for 1:1, content-faithful re-layout of an existing deck through Default or explicit Quick execution.
+description: 1:1 content-faithful re-layout through default Quick or explicitly escalated Guided Default.
 ---
 
 # Beautify PPTX (Re-layout) Profile
@@ -10,9 +10,9 @@ Re-lays-out an existing `.pptx`: the text is preserved **verbatim**, the source 
 
 **Trigger**: the user supplies a `.pptx` and asks to beautify / re-layout / 重新排版 / 美化 while keeping the content. Explicit intent + a provided file only; never auto-infer.
 
-**Hard rule — select one runtime before continuing**: when the same request
-also meets [`quick-generate.md`](./quick-generate.md)'s explicit trigger, load
-that runtime and do not load `generate-pptx.md`. Otherwise load
+**Hard rule — select one runtime before continuing**: load
+[`quick-generate.md`](./quick-generate.md) unless [`routing.md`](../routing.md)
+identifies an explicit Guided Default escalation trigger. In that case load
 [`generate-pptx.md`](../generate-pptx.md) and do not load Quick. The 1:1
 Beautify constraints in this file apply in either runtime.
 
@@ -39,7 +39,7 @@ activate the Codex-supported, Quick-only
 Beautify requires a semantic source PPTX and deliberately redesigns layout; the
 two fidelity profiles never compose.
 
-**When this profile is wrong — re-architecture belongs to ordinary Generate**: this profile preserves the source's page count and page order 1:1. It is for "keep this deck, just lay it out better". When the user instead wants the original page breakdown reconsidered — merge / split / reorder pages, re-outline the structure, build a *better deck* from the same content rather than a prettier version of the same pages — do not activate this profile. This includes re-pagination for fit: "keep every word but split a crowded page so it reads better" changes page count. Convert the deck with [`ppt_to_md`](../../scripts/source_to_md/ppt_to_md.py) and use ordinary Quick when Quick was explicit, otherwise the Default main pipeline. The deciding question: is the source's page split information to preserve, or just the previous author's structure to improve? Preserve → activate this profile; improve → ordinary Generate in the selected runtime.
+**When this profile is wrong — re-architecture belongs to ordinary Generate**: this profile preserves the source's page count and page order 1:1. It is for "keep this deck, just lay it out better". When the user instead wants the original page breakdown reconsidered — merge / split / reorder pages, re-outline the structure, build a *better deck* from the same content rather than a prettier version of the same pages — do not activate this profile. This includes re-pagination for fit: "keep every word but split a crowded page so it reads better" changes page count. Convert the deck with [`ppt_to_md`](../../scripts/source_to_md/ppt_to_md.py) and use ordinary Generate in the runtime selected by [`routing.md`](../routing.md). The deciding question: is the source's page split information to preserve, or just the previous author's structure to improve? Preserve → activate this profile; improve → ordinary Generate in the selected runtime.
 
 ---
 
@@ -75,7 +75,8 @@ python3 ${SKILL_DIR}/scripts/project_manager.py init <project_name> --format <fo
 python3 ${SKILL_DIR}/scripts/project_manager.py import-sources <project_path> <source.pptx>
 ```
 
-Run exactly one `init` command: the Quick form only when Quick was selected.
+Run exactly one `init` command: use the Quick form unless Guided Default was
+explicitly selected.
 
 ---
 

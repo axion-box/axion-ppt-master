@@ -17,7 +17,7 @@ command provides a compact view.
 
 ## Project Overview
 
-PPT Master turns source material into natively editable DrawingML PPTX. Generate has two mutually exclusive runtimes: Default Strategist → Image_Generator → Executor, and self-contained Quick without separate strategy/confirmation. Beautify selects from explicit Quick intent; Image to PPTX always uses Quick.
+PPT Master turns source material into natively editable DrawingML PPTX. Generate has two mutually exclusive runtimes: self-contained Quick without separate strategy/confirmation is the ordinary default; Guided Default Strategist → Image_Generator → Executor is an explicit escalation for confirmation, interactive selection/review, spec/lock governance, or reusable native structure. Beautify follows the same selection; Image to PPTX always uses Quick.
 
 **Route selection authority**: [`skills/ppt-master/workflows/routing.md`](skills/ppt-master/workflows/routing.md) owns the four top-level artifact routes: Generate PPTX, Create Template, Fill Native PPTX, and Enhance Native PPTX. Child workflows, profiles, stages, and governance documents refine one selected route; they are not competing top-level routes.
 
@@ -25,9 +25,9 @@ PPT Master turns source material into natively editable DrawingML PPTX. Generate
 - Default Generate prepares template candidates internally in Step 3, then confirms the communication contract and free-design/template choice together in Stage 1. Template content stays unread until that confirmation; selected roots are installed before template-aware Stage 2. Quick skips this interaction.
 - Raw PPTX template plus new material/topic routes to [`template-fill-pptx`](skills/ppt-master/workflows/template-fill-pptx.md), not the SVG pipeline.
 - Raw PPTX cannot be consumed as a Generate template workspace; run [`create-template`](skills/ppt-master/workflows/create-template.md) first and return with the generated workspace root as a Stage-1 candidate. Never add Master/Layout structure directly to an existing PPTX/SVG; generate new structured SVG pages from the workspace.
-- Explicit quick/fast or skip-strategy generation may use [`quick-generate`](skills/ppt-master/workflows/profiles/quick-generate.md): prepare sources/resources as needed, decide without interaction, omit Strategist/confirmation/spec/lock, hand-author `svg_output/`, pass its lockless final checker, and export.
-- Recorded, self-running, or video-directed Generate work conditionally loads [`video-design`](skills/ppt-master/references/video-design.md) inside the selected Default or explicit Quick runtime before page planning. It changes scene, script, and motion design—not the runtime/profile or artifact route.
-- PPTX beautify is a strict 1:1 Generate [`profile`](skills/ppt-master/workflows/profiles/beautify-pptx.md), not a separate route. Explicit Quick intent uses the Quick runtime; otherwise it uses Default. Any split/merge/drop/reorder disables Beautify and returns to ordinary Generate in the selected runtime.
+- Ordinary Generate uses [`quick-generate`](skills/ppt-master/workflows/profiles/quick-generate.md): prepare sources/resources as needed, decide without interaction, omit Strategist/confirmation/spec/lock, hand-author `svg_output/`, pass its lockless final checker, and export. Source length and page count do not select Guided Default.
+- Recorded, self-running, or video-directed Generate work conditionally loads [`video-design`](skills/ppt-master/references/video-design.md) inside the selected Quick or Guided Default runtime before page planning. It changes scene, script, and motion design—not the runtime/profile or artifact route.
+- PPTX beautify is a strict 1:1 Generate [`profile`](skills/ppt-master/workflows/profiles/beautify-pptx.md), not a separate route. It uses Quick by default and Guided Default only on an explicit escalation trigger. Any split/merge/drop/reorder disables Beautify and returns to ordinary Generate in the selected runtime.
 - Page-image reconstruction uses the Codex-supported, Quick-only [`image-to-pptx`](skills/ppt-master/workflows/profiles/image-to-pptx.md) profile. Normalize input page frames; one frame becomes one slide. Restore text natively, reconstruct low-resolution graphics without changing identity, and derive registered clean-base/scene layers. Padded-bbox-disjoint objects may share a generated plate and become independent crops. Never use a full-slide screenshot skin. Other hosts are unsupported.
 - Finished PPTX native enhancement uses [`native-enhance-pptx`](skills/ppt-master/workflows/native-enhance-pptx.md) and must not enter SVG regeneration.
 - [`visual-review`](skills/ppt-master/workflows/stages/visual-review.md), [`customize-animations`](skills/ppt-master/workflows/stages/customize-animations.md), and [`generate-audio`](skills/ppt-master/workflows/stages/generate-audio.md) are supporting stages; their trigger rules remain explicit/conditional.
@@ -53,7 +53,7 @@ PPT Master turns source material into natively editable DrawingML PPTX. Generate
 
 ## Command Quick Reference
 
-Convenience summary only — route selection starts in [`SKILL.md`](skills/ppt-master/SKILL.md). Image to PPTX always uses [`quick-generate.md`](skills/ppt-master/workflows/profiles/quick-generate.md); Beautify uses it only when Quick is explicit, otherwise [`generate-pptx.md`](skills/ppt-master/workflows/generate-pptx.md).
+Convenience summary only — route selection starts in [`SKILL.md`](skills/ppt-master/SKILL.md). Image to PPTX always uses [`quick-generate.md`](skills/ppt-master/workflows/profiles/quick-generate.md); ordinary Generate and Beautify use it by default. Explicit escalation triggers select [`generate-pptx.md`](skills/ppt-master/workflows/generate-pptx.md).
 
 ```bash
 # Source content conversion

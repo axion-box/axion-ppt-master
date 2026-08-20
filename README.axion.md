@@ -18,6 +18,16 @@
 
 ## Axion 集成原则
 
+### 0. 独立仓库与独立发行
+
+- `axion-ppt-master` 是 PPT Master Axion 分支的唯一源码和 prompt 真源，并独立构建、版本化和发布。
+- `axion-agent-v2` 只提供 `ppt-main` profile、`ppt-process` 宿主命令和运行时注入；禁止把
+  `ppt-master` 复制、镜像或提交到 `axion-agent-v2/builtin/skills/`，也禁止保留 builtin fallback。
+- 开发和隔离测试必须把本仓库的 `skills/ppt-master/` 完整安装到目标
+  `<mainDir>/skills/ppt-master/`；系统包安装到 `/opt/axion/skills/ppt-master/`。Agent 从实际激活
+  skill 的绝对目录运行，不能依赖两个仓库处于相邻路径。
+- `README.axion.md` 留在本仓库根目录，属于分支维护和发行合同，不进入 Skill 运行时 prompt 包。
+
 ### 1. 保留上游的演示文稿核心
 
 - 保留 Strategist → Image Generator → Executor 的严格串行工作流及其质量门禁。
@@ -69,7 +79,8 @@ Axion 发行策略采用后端白名单：默认支持面以 GlenClaw 的 OpenAI
 
 ### 5. 按 Axion 目录和身份部署
 
-- 本地安装脚本将 Skill 安装到 `~/.axion-agent/skills/ppt-master`。
+- 本地安装脚本将 Skill 安装到 `~/.axion-agent/skills/ppt-master`；隔离测试把同一目录树复制到
+  测试实例的 `<mainDir>/skills/ppt-master`，不得改从 Agent builtin 镜像取文件。
 - 默认生成项目放在 `~/ppt/YYYY-mm/`，使工作产物与仓库源码分离。
 - Debian 包将 Skill 安装到 `/opt/axion/skills/ppt-master`。
 - 系统包面向 `glenclaw:glenclaw` 运行身份，并校验约定的 UID/GID `10001:10001`。
@@ -95,3 +106,21 @@ Axion 发行版的核心承诺：
 3. 是否会扩大未经验证的后端、凭据或部署复杂度？
 
 只有同时保住上游 PPT 能力与 Axion 运行边界的改动，才符合本分支的长期方向。
+
+## 上游合并合同
+
+每次合并上游都必须进行语义重写，而不是覆盖文件后追加 Axion 补丁：
+
+1. 对照本文件和 Axion Agent 的 `docs/design/modules/cmd-ppt-process.md` 阅读上游 route、profile、
+   stage 与 reference 变更。
+2. 把 Axion 命令边界、失败分类、receipt gate 和实际 PPTX visual-review loop 融合进原始 authority；
+   禁止在 `ppt-main.yaml`、额外 system prompt 或文件尾部追加旁路 patch。
+3. 删除 GlenClaw/Axion 运行环境不可执行的 provider、renderer 和工具分支。宿主保证注入
+   `AXION_AGENT_BIN_PATH`，prompt 必须直接调用，禁止先检查、搜索或探测它。
+4. 一个行为只保留一个 owning document；重复规则改为引用，不允许 profile、stage 和 reference
+   各维护一份可能漂移的副本。
+5. 合并完成后重新构建独立包，把它安装到隔离 `<mainDir>/skills/ppt-master`，运行仓库门禁、
+   `ppt-process` 测试以及真实 PPTX 渲染和 visual review；禁止用临时回填 builtin 副本让测试通过。
+
+如果 prompt 仍描述 Axion 无法执行的路径、`ppt-main.yaml` 含行为补丁，或测试依赖
+`axion-agent-v2/builtin/skills/ppt-master`，则上游合并尚未完成。

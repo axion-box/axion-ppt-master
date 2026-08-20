@@ -68,13 +68,13 @@ Default Generate 把模板选择放在 Stage 1，与沟通契约同屏确认；�
    ```
 3. **拿回可编辑的 `.pptx`**,位于 `exports/<名称>_<时间戳>.pptx` —— 真正的 DrawingML 形状、文本框、图表,在 PowerPoint / Keynote / WPS / LibreOffice 里点开就能改。
 
-生成前，Stage 1 同时确认沟通契约、画布/格式与自由设计/模板选择。AI 随后安装所选工作区；最终 Stage 2 读取安装结果，并确认页数、视觉系统、模板应用方式与生产选项。之后内容分析、排版、配图、SVG 生成、导出都由 AI 完成——这就是其它能力围绕的核心环节。不想走交互确认，见下方[快速模式](#快速模式)。
+普通生成默认直接使用下方的快速模式，不经过交互确认。只有用户明确要求先出策略/确认设计、交互式模板选择、实时预览/批注、Design Spec/lock 治理，或可复用的原生 Master/Layout 结构时，才进入 Guided Default 的 Stage 1 与 Stage 2。
 
 ---
 
 ## 快速模式
 
-默认流程会先进行 Stage 1 的沟通/模板合并确认，再进入最终 Stage 2。不想经过这些交互，就显式要求**快速生成**：
+快速模式是普通生成的默认选择。仍可显式写出**快速生成**来强调意图：
 
 ```
 你：用 sources/report.pdf 快速生成一份 PPT,不用跟我确认
@@ -91,7 +91,7 @@ Quick 保持无锁 flat 导出，因此 Layout / Deck 原型会指导页面创�
 
 它不跳过能力：来源转换、事实缺口研究、共享美学规范、图片 / 图标准备，以及原生形状 / 图表 / 表格创作仍按需运行。结构性公式直接写成 PowerPoint 原生 marker，不再作为图片素材准备。必需素材缺失时它会停下来跟你要，不会拿无关材料顶替。
 
-快速模式是一次性生成,不是缩短后的可续接流程。它不产生 Strategist 记录、`design_spec.md`、`spec_lock.md` 或替代性的页面计划;内容、设计和资源决策只存在于 AI 的当前上下文。交付前一旦丢失该上下文,就重新运行 Quick。资源 manifest、质量报告、postflight 与冷 Python 审计日志可以保留,但无法还原 AI 为什么这样设计。该 profile 省掉的是交互和持久规划,不是 PPT 能力或预期质量标准。
+快速模式是一次性生成,不是缩短后的可续接流程。它不产生 Strategist 记录、`design_spec.md`、`spec_lock.md` 或替代性的设计合同;内容、设计和资源决策只存在于 AI 的当前上下文。长本地材料可以先生成一份有长度上限且带定位信息的 source brief；它只是来源压缩，不是路线状态。交付前一旦丢失当前上下文,就重新运行 Quick。资源 manifest、质量报告、postflight 与冷 Python 审计日志可以保留,但无法还原 AI 为什么这样设计。该 profile 省掉的是交互和持久规划,不是 PPT 能力或预期质量标准。
 
 完整说明 → [快速模式 profile](../../skills/ppt-master/workflows/profiles/quick-generate.md)
 

@@ -68,13 +68,13 @@ The whole loop is three steps. Install first — you only need Python; see [Quic
    ```
 3. **Get an editable `.pptx`** at `exports/<name>_<timestamp>.pptx` — real DrawingML shapes, text boxes, and charts you can click and edit in PowerPoint, Keynote, WPS, or LibreOffice.
 
-Before generation, Stage 1 confirms the communication contract, canvas/format, and free-design/template choice together. The AI then installs any selected workspace; final Stage 2 reads that installed state and confirms page count, the visual system, template application, and production choices. From there it handles content analysis, layout, image acquisition, SVG generation, and export — the core loop everything else builds on. To skip interactive confirmation, see [Quick mode](#quick-mode) below.
+Ordinary generation uses Quick mode below and proceeds without an interactive confirmation. If you explicitly request a separate strategy/confirmation, template selection UI, live preview/annotation, Design Spec/lock governance, or reusable native Master/Layout structure, Guided Default instead runs Stage 1 and Stage 2 before authoring.
 
 ---
 
 ## Quick mode
 
-The default flow runs its combined Stage-1 communication/template choice followed by final Stage 2. To skip that interaction, explicitly ask for **quick generation**:
+Quick is the ordinary default. You may still say **quick generation** to make the intent explicit:
 
 ```
 You: Quickly generate a deck from sources/report.pdf — no need to confirm with me
@@ -92,7 +92,7 @@ but do not compile into reusable native Master / Layout objects.
 
 It does not skip capabilities: source conversion, research on identified factual gaps, shared aesthetic guidance, image / icon preparation, and native-shape / chart / table authoring still run as needed. Structural formulas are authored directly as native PowerPoint markers rather than prepared as image assets. If a required asset is missing, it still stops and asks you for it instead of substituting unrelated material.
 
-Quick is a one-pass profile, not a shortened resumable workflow. It creates no Strategist record, `design_spec.md`, `spec_lock.md`, or substitute page plan; its content/design/resource decisions exist only in the active AI context. If that context is lost before delivery, start Quick again. Operational manifests, quality reports, postflight, and the cold Python audit log may remain, but they cannot reconstruct why the AI designed the deck that way. The profile reduces interaction and durable planning, not the available presentation toolbox or the intended quality bar.
+Quick is a one-pass profile, not a shortened resumable workflow. It creates no Strategist record, `design_spec.md`, `spec_lock.md`, or substitute design contract; its content/design/resource decisions exist only in the active AI context. A long local source may produce one bounded, locator-backed source brief before that planning; the brief is source compression, not route state. If the active context is lost before delivery, start Quick again. Operational manifests, quality reports, postflight, and the cold Python audit log may remain, but they cannot reconstruct why the AI designed the deck that way. The profile reduces interaction and durable planning, not the available presentation toolbox or the intended quality bar.
 
 Full guide → [quick-generate profile](../skills/ppt-master/workflows/profiles/quick-generate.md)
 

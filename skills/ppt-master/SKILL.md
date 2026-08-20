@@ -43,18 +43,17 @@ use CWD, or assume a repo checkout. If unavailable, ask; never search or guess.
 | Selected route / profile | Runtime authority |
 |---|---|
 | Generate PPTX — Image to PPTX | [`workflows/profiles/image-to-pptx.md`](workflows/profiles/image-to-pptx.md); Codex-supported, always Quick |
-| Generate PPTX — Beautify | [`workflows/profiles/beautify-pptx.md`](workflows/profiles/beautify-pptx.md); explicit Quick intent selects Quick, otherwise Default |
-| Generate PPTX — ordinary Default | [`workflows/generate-pptx.md`](workflows/generate-pptx.md) |
-| Generate PPTX — ordinary explicit Quick | [`workflows/profiles/quick-generate.md`](workflows/profiles/quick-generate.md) |
+| Generate PPTX — Beautify | [`workflows/profiles/beautify-pptx.md`](workflows/profiles/beautify-pptx.md); ordinary runtime selection applies |
+| Generate PPTX — ordinary default Quick | [`workflows/profiles/quick-generate.md`](workflows/profiles/quick-generate.md) |
+| Generate PPTX — explicit Guided Default | [`workflows/generate-pptx.md`](workflows/generate-pptx.md); only for an escalation trigger |
 | Create Template | [`workflows/create-template.md`](workflows/create-template.md) |
 | Fill Native PPTX | [`workflows/template-fill-pptx.md`](workflows/template-fill-pptx.md) |
 | Enhance Native PPTX | [`workflows/native-enhance-pptx.md`](workflows/native-enhance-pptx.md) |
 
-**Hard rule — selected authority only**: Do not load another top-level route's
-procedure after routing. Image to PPTX and Beautify are mutually exclusive;
-Image to PPTX activates Quick, while Beautify selects from explicit Quick
-intent. Never load both runtimes. Supporting documents refine one route; they
-never compete with it.
+**Hard rule — selected authority only**: After routing, load only the selected
+procedure. Image to PPTX always uses Quick; Beautify follows ordinary runtime
+selection. Never load both runtimes. Supporting documents refine one route;
+they never compete with it.
 
 ---
 

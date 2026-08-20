@@ -183,7 +183,7 @@ defaults from a lock. Without a confirmed design contract, first-page
 calibration, or resumable decision history it does not promise the same design
 decisions or wall-clock time as Default.
 
-The default Generate pipeline continues to prefer quality over speed.
+The Guided Default Generate pipeline continues to prefer explicit governance over speed; ordinary generation uses Quick and relies on actual-PPTX review for final visual quality.
 
 ### Standalone CLI / hosted SaaS / desktop app form factors
 

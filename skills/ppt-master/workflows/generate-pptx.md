@@ -6,7 +6,7 @@ description: Default Generate PPTX authority for source intake, planning, SVG au
 
 > Load only after [`routing.md`](./routing.md) selects Default Generate or its
 > Beautify profile. This file owns that runtime's Step 1–7 sequence, gates, role
-> switching, and mandatory commands. Explicit Quick loads its own profile instead.
+> switching, and mandatory commands. Default Quick loads its own profile instead.
 
 **Hard rule — runtime paths**: Resolve every linked or abbreviated package path
 below from the entry-time `SKILL_DIR` anchor and expand it inside each tool
@@ -21,9 +21,9 @@ call. Never change CWD or inherit a prior shell working directory.
 - `preset_shape_svg.py` and `shape_boolean_svg.py` may provide only their documented stdout fragment(s) after the main agent chooses the object's role, operands, paint, and z-order; neither helper chooses layout or writes a page.
 - Gate checklists are internal verification, not user-facing output. On success, continue automatically and emit at most one compact status line when useful; on failure, report only the blocking items and required recovery.
 
-**Profile boundary**: Explicit Quick is selected before runtime authority
-loading and never enters this file. Beautify enters this file only when its
-request does not explicitly select Quick.
+**Profile boundary**: Quick is selected before runtime authority loading and
+never enters this file. Beautify enters this file only when an explicit Guided
+Default escalation trigger matches.
 
 ### SVG Page-Design Boundary
 

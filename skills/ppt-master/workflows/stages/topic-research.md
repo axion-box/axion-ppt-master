@@ -60,6 +60,17 @@ Do not repeat the full default-pipeline confirmation here. Default Generate
 confirms the complete communication contract in Step 4; Quick Generate adds no
 confirmation stage.
 
+**Quick bounded-evidence default**: For an ordinary management, proposal,
+roadmap, training, or action deck of at most 12 pages, research only claims that
+materially change the recommendation. Use at most one batched search turn and
+one batched fetch turn, retain no more than four externally sourced claims, and
+prefer one authoritative page that closes several declared gaps. Clearly
+labeled scenario assumptions, example budgets, decision thresholds, and the
+user's requested framework do not require decorative external statistics.
+Exceed this bound only when the user explicitly asks for a research-heavy deck
+or the requested conclusion genuinely depends on more evidence; record that
+reason in the research brief.
+
 ---
 
 ## Execution Context

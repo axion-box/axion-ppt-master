@@ -595,14 +595,32 @@ Write `project/images/image_prompts.json` with this shape:
 > Prerequisite: §3 Steps 1–3 are complete and `images/image_prompts.json` exists and validates.
 
 Axion has one supported automated image path: run the manifest through the
-GlenClaw OpenAI-compatible service. The host injects the resolved runtime
-credentials and endpoint into the process environment. Do not inspect dotenv
-files, ask the user for provider configuration, or switch to another backend.
+GlenClaw OpenAI-compatible service. The host always injects the command path,
+resolved runtime credentials, and endpoint into the process environment. Invoke
+the command directly; do not test, print, search for, or otherwise inspect
+`AXION_AGENT_BIN_PATH`, dotenv files, credentials, or endpoints.
+
+This Axion fork requires the bounded host command; image generation is not
+reachable through a second provider or direct Python branch:
 
 ```bash
-python3 "${SKILL_DIR}/scripts/image_gen.py" --manifest <project_path>/images/image_prompts.json
-python3 "${SKILL_DIR}/scripts/image_gen.py" --render-md <project_path>/images/image_prompts.json
+"${AXION_AGENT_BIN_PATH}" ppt-process images \
+  --skill-dir "${SKILL_DIR}" --project-dir "<project_path>" --retries 1
 ```
+
+Use the host system prompt's shell syntax for the command above; never
+print/search the variable first or retry interpolation variants.
+
+It renders the human-readable sidecar, runs the manifest, retries only remaining
+`Pending` / `Failed` items once through the same path, and returns one compact
+JSON receipt. Run it once per manifest state. Do not call `--help`, list
+backends, inspect scripts or environment files, probe the endpoint, or activate
+another image-generation workflow after a failure. Apply rule 5 directly from
+the returned terminal states.
+
+Do not add a missing-command branch. A process-launch error is returned by the
+shell/CLI and must be reported as that concrete mechanical error; it does not
+authorize `image_gen.py` or reconstruction of an alternate backend flow.
 
 Execution rules:
 
