@@ -21,7 +21,7 @@ Create one reusable template workspace under either the **global template librar
 > **Boundary against page-image reconstruction**: screenshots and page visuals
 > in this route are evidence for reusable rules and prototypes. When the user
 > instead wants each supplied page image reconstructed into one final editable
-> slide, use the Codex-supported [`image-to-pptx.md`](./profiles/image-to-pptx.md);
+> slide, use the Axion-supported [`image-to-pptx.md`](./profiles/image-to-pptx.md);
 > do not turn a final-deck request into a template workspace.
 
 ## Child Workflow Dispatch

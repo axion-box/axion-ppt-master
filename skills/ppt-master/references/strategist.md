@@ -303,9 +303,9 @@ owns SVG authoring under [`native-hyperlinks.md`](./native-hyperlinks.md).
 
 **Current inventory**: If `images/` is non-empty, run `python3 scripts/analyze_images.py <project_path>/images` and read `analysis/image_analysis.csv` before recommending a source. Re-run after that folder changes.
 
-**Hard rule**: Credentials do not decide image need. Missing `IMAGE_BACKEND`, host generation, or keyed stock-provider credentials never justifies `none` or deletion of a planned web-compatible role. Web search retains zero-config providers; an explicit generation-only requirement follows the normal Offline Manual boundary.
+**Hard rule**: Credentials do not decide image need. Do not inspect runtime image configuration during planning. A temporary GlenClaw failure never justifies `none` or deletion of a planned web-compatible role; Step 5 owns generation recovery, while web search retains its zero-config sources.
 
-**Mandatory — no AI capability preflight**: When `recommend.image_usage` includes `ai`, preserve an explicit user path instruction; otherwise recommend `auto`. Do not inspect backend configuration, check host-tool availability, or probe a provider during planning. Generate Step 5 execution is the first capability check.
+**Mandatory — no AI capability preflight**: When `recommend.image_usage` includes `ai`, recommend the fixed `auto` GlenClaw path. Do not inspect backend configuration or probe the service during planning. Generate Step 5 execution is the first capability check.
 
 **Default — visual grounding before `none` (may override when the full-roster carrier review finds no useful image job)**: Honor an explicit no-image requirement. First decide whether the audience must recognize, experience, compare, or choose an externally verifiable subject, place, product, or setting. When yes, propose `provided` / `web`; propose `ai` when invented or deliberately stylized expression materially improves a planned visual job. Treat `none` as a positive whole-deck conclusion when no image source owns a meaningful communication job. Mixed sources may serve different page roles. The three Stage-2 style directions never settle source: a rendering candidate resolves how imagery looks, never whether a real subject must appear as itself.
 

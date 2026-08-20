@@ -2,40 +2,18 @@
 """
 Unified Image Generation Tool
 
-Dispatches to the appropriate backend based on explicit provider configuration.
+Dispatches image requests through the Axion-supported GlenClaw OpenAI-compatible
+backend. Runtime values come from the current process environment; this script
+does not read dotenv files.
 
-Backend selection (`IMAGE_BACKEND` in `.env` or the current process environment):
-  IMAGE_BACKEND=gemini      -> Gemini backend (google-genai SDK)
-  IMAGE_BACKEND=openai      -> OpenAI-compatible backend (raw HTTP via requests)
-  IMAGE_BACKEND=minimax     -> MiniMax image backend
-  IMAGE_BACKEND=stability   -> Stability AI backend
-  IMAGE_BACKEND=bfl         -> Black Forest Labs FLUX backend
-  IMAGE_BACKEND=ideogram    -> Ideogram backend
-  IMAGE_BACKEND=qwen        -> Alibaba Qwen image backend
-  IMAGE_BACKEND=zhipu       -> Zhipu GLM-Image backend
-  IMAGE_BACKEND=volcengine  -> Volcengine Seedream backend
-  IMAGE_BACKEND=modelscope  -> ModelScope backend
-  IMAGE_BACKEND=siliconflow -> SiliconFlow backend
-  IMAGE_BACKEND=fal         -> fal.ai backend
-  IMAGE_BACKEND=replicate   -> Replicate backend
-  IMAGE_BACKEND=openrouter  -> OpenRouter backend
-
-Configuration source (process env wins, `.env` is the fallback layer):
-  1. Current process environment variables
-  2. The first `.env` found among:
-     - Current working directory
-     - Skill directory (e.g. `~/.agents/skills/ppt-master/.env`)
-     - Repo root (when running from a clone)
-     - `~/.ppt-master/.env` (user-level config)
+Built-in defaults:
+  IMAGE_BACKEND=openai
+  OPENAI_API_BASE=https://api.glenclaw.com
+  OPENAI_IMAGE_MODEL=image
+  OPENAI_MODEL=chat   (text LLM only; ignored by image generation)
 
 Supported keys:
-  IMAGE_BACKEND    (required) backend name
-
-  Provider-specific keys are used for credentials and overrides, for example:
-    GEMINI_API_KEY / GEMINI_MODEL / GEMINI_BASE_URL
-    OPENAI_API_KEY / OPENAI_MODEL / OPENAI_BASE_URL
-    QWEN_API_KEY / QWEN_MODEL / QWEN_BASE_URL
-    ZHIPU_API_KEY / ZHIPU_MODEL / ZHIPU_BASE_URL
+  IMAGE_BACKEND / OPENAI_API_KEY / OPENAI_API_BASE / OPENAI_IMAGE_MODEL
 
 Usage:
   python3 image_gen.py "prompt" --aspect_ratio 16:9 --image_size 1K -o images/
@@ -56,32 +34,10 @@ import time
 from pathlib import Path
 
 from console_encoding import configure_utf8_stdio
-from config import load_prefixed_env_file, resolve_env_path
+from config import apply_runtime_env_defaults
 
 configure_utf8_stdio()
 
-ENV_PATH = resolve_env_path()
-IMAGE_ENV_PREFIXES = (
-    "IMAGE_",
-    "GEMINI_",
-    "OPENAI_",
-    "MINIMAX_",
-    "STABILITY_",
-    "BFL_",
-    "IDEOGRAM_",
-    "QWEN_",
-    "DASHSCOPE_",
-    "ZHIPU_",
-    "BIGMODEL_",
-    "VOLCENGINE_",
-    "LAS_",
-    "ARK_",
-    "MODELSCOPE_",
-    "SILICONFLOW_",
-    "FAL_",
-    "REPLICATE_",
-    "OPENROUTER_",
-)
 DEPRECATED_IMAGE_KEYS = {
     "IMAGE_API_KEY",
     "IMAGE_MODEL",
@@ -100,158 +56,19 @@ ALL_ASPECT_RATIOS = [
 ALL_IMAGE_SIZES = ["512px", "1K", "2K", "4K"]
 
 BACKEND_REGISTRY = {
-    "gemini": {
-        "module": "backend_gemini",
-        "tier": "core",
-        "label": "Google Gemini",
-        "default_model": "gemini-3.1-flash-image",
-        "default_image_size": "1K",
-        "key_hint": "GEMINI_API_KEY",
-        "aliases": ["google"],
-    },
     "openai": {
         "module": "backend_openai",
         "tier": "core",
-        "label": "OpenAI / OpenAI-compatible",
-        "default_model": "gpt-image-2",
+        "label": "GlenClaw OpenAI-compatible",
+        "default_model": "image",
         "default_image_size": "1K",
         "key_hint": "OPENAI_API_KEY",
         "aliases": ["openai-compatible", "openai_compatible"],
-    },
-    "minimax": {
-        "module": "backend_minimax",
-        "tier": "experimental",
-        "label": "MiniMax Image",
-        "default_model": "image-01",
-        "default_image_size": "1K",
-        "key_hint": "MINIMAX_API_KEY",
-        "aliases": ["minimaxi"],
-    },
-    "qwen": {
-        "module": "backend_qwen",
-        "tier": "core",
-        "label": "Alibaba Qwen Image",
-        "default_model": "qwen-image-2.0-pro",
-        "default_image_size": "1K",
-        "key_hint": "QWEN_API_KEY / DASHSCOPE_API_KEY",
-        "aliases": ["alibaba", "dashscope"],
-    },
-    "zhipu": {
-        "module": "backend_zhipu",
-        "tier": "core",
-        "label": "Zhipu GLM-Image",
-        "default_model": "glm-image",
-        "default_image_size": "1K",
-        "key_hint": "ZHIPU_API_KEY / BIGMODEL_API_KEY",
-        "aliases": ["bigmodel", "glm", "glm-image"],
-    },
-    "volcengine": {
-        "module": "backend_volcengine",
-        "tier": "core",
-        "label": "Volcengine Seedream",
-        "default_model": "doubao-seedream-4-5-251128",
-        "default_image_size": "2K",
-        "key_hint": "LAS_API_KEY / VOLCENGINE_API_KEY / ARK_API_KEY",
-        "aliases": ["ark", "doubao", "seedream"],
-    },
-    "modelscope": {
-        "module": "backend_modelscope",
-        "tier": "experimental",
-        "label": "ModelScope",
-        "default_model": None,
-        "model_hint": "MODELSCOPE_MODEL",
-        "default_image_size": "1K",
-        "key_hint": "MODELSCOPE_API_KEY",
-        "aliases": ["modelscope", "model-scope"]
-    },
-    "stability": {
-        "module": "backend_stability",
-        "tier": "extended",
-        "label": "Stability AI",
-        "default_model": "stable-image-core",
-        "default_image_size": "1K",
-        "key_hint": "STABILITY_API_KEY",
-        "aliases": ["stabilityai", "stability-ai"],
-    },
-    "bfl": {
-        "module": "backend_bfl",
-        "tier": "extended",
-        "label": "Black Forest Labs FLUX",
-        "default_model": "flux-pro-1.1-ultra",
-        "default_image_size": "1K",
-        "key_hint": "BFL_API_KEY",
-        "aliases": ["flux", "black-forest-labs", "black_forest_labs"],
-    },
-    "ideogram": {
-        "module": "backend_ideogram",
-        "tier": "extended",
-        "label": "Ideogram",
-        "default_model": "ideogram-v3",
-        "default_image_size": "1K",
-        "key_hint": "IDEOGRAM_API_KEY",
-    },
-    "siliconflow": {
-        "module": "backend_siliconflow",
-        "tier": "experimental",
-        "label": "SiliconFlow",
-        "default_model": "Qwen/Qwen-Image",
-        "default_image_size": "1K",
-        "key_hint": "SILICONFLOW_API_KEY",
-        "aliases": ["silicon"],
-    },
-    "fal": {
-        "module": "backend_fal",
-        "tier": "experimental",
-        "label": "fal.ai",
-        "default_model": "fal-ai/nano-banana-2",
-        "default_image_size": "1K",
-        "key_hint": "FAL_KEY / FAL_API_KEY",
-        "aliases": ["fal-ai"],
-    },
-    "replicate": {
-        "module": "backend_replicate",
-        "tier": "experimental",
-        "label": "Replicate",
-        "default_model": "black-forest-labs/flux-1.1-pro",
-        "default_image_size": "1K",
-        "key_hint": "REPLICATE_API_TOKEN / REPLICATE_API_KEY",
-    },
-    "openrouter": {
-        "module": "backend_openrouter",
-        "tier": "experimental",
-        "label": "OpenRouter",
-        "default_model": "google/gemini-3.1-flash-image",
-        "default_image_size": "1K",
-        "key_hint": "OPENROUTER_API_KEY",
     },
 }
 
 TIER_ORDER = {"core": 0, "extended": 1, "experimental": 2}
 SUPPORTED_BACKENDS = tuple(sorted(BACKEND_REGISTRY))
-
-
-def _load_image_env_file() -> Path | None:
-    """
-    Load image generation config from the resolved `.env` as a fallback layer.
-
-    Existing process environment variables win over `.env`.
-    """
-    replacements = {
-        "IMAGE_API_KEY": "GEMINI_API_KEY / OPENAI_API_KEY / QWEN_API_KEY / ZHIPU_API_KEY / ...",
-        "IMAGE_MODEL": "GEMINI_MODEL / OPENAI_MODEL / QWEN_MODEL / ZHIPU_MODEL / ...",
-        "IMAGE_BASE_URL": "GEMINI_BASE_URL / OPENAI_BASE_URL / QWEN_BASE_URL / ZHIPU_BASE_URL / ...",
-    }
-    deprecated_messages = {
-        key: (
-            "Global image config keys have been removed.\n"
-            f"Use IMAGE_BACKEND plus provider-specific keys instead, such as {replacement}."
-        )
-        for key, replacement in replacements.items()
-    }
-    return load_prefixed_env_file(
-        IMAGE_ENV_PREFIXES,
-        deprecated_keys=deprecated_messages,
-    )
 
 
 def _validate_runtime_config() -> None:
@@ -260,9 +77,9 @@ def _validate_runtime_config() -> None:
         if key not in os.environ:
             continue
         replacement = {
-            "IMAGE_API_KEY": "GEMINI_API_KEY / OPENAI_API_KEY / QWEN_API_KEY / ZHIPU_API_KEY / ...",
-            "IMAGE_MODEL": "GEMINI_MODEL / OPENAI_MODEL / QWEN_MODEL / ZHIPU_MODEL / ...",
-            "IMAGE_BASE_URL": "GEMINI_BASE_URL / OPENAI_BASE_URL / QWEN_BASE_URL / ZHIPU_BASE_URL / ...",
+            "IMAGE_API_KEY": "OPENAI_API_KEY",
+            "IMAGE_MODEL": "OPENAI_IMAGE_MODEL",
+            "IMAGE_BASE_URL": "OPENAI_API_BASE",
         }[key]
         raise ValueError(
             f"Unsupported image config key: {key}\n"
@@ -309,15 +126,7 @@ def _load_backend(canonical_name: str) -> tuple[object, str]:
 
 def _print_backend_resolution() -> None:
     """Print the effective Path A backend without exposing credentials."""
-    backend_from_process = "IMAGE_BACKEND" in os.environ
-    try:
-        env_path = _load_image_env_file()
-    except ValueError as exc:
-        print("Resolved backend: invalid configuration")
-        print(f"Configuration source: {ENV_PATH}")
-        print(f"Configuration error: {exc}")
-        return
-
+    apply_runtime_env_defaults()
     try:
         _validate_runtime_config()
     except ValueError as exc:
@@ -327,22 +136,10 @@ def _print_backend_resolution() -> None:
         return
 
     backend_name = os.environ.get("IMAGE_BACKEND", "").strip().lower()
-    if not backend_name:
-        if backend_from_process:
-            source = "process environment (empty)"
-        elif env_path is not None:
-            source = f"none (checked {env_path})"
-        else:
-            source = "none (no .env found)"
-        print("Resolved backend: not configured (Path A unavailable)")
-        print(f"Configuration source: {source}")
-        return
-
     canonical = BACKEND_ALIASES.get(backend_name)
     resolved = canonical or f"invalid ({backend_name})"
-    source = "process environment" if backend_from_process else str(env_path or ENV_PATH)
     print(f"Resolved backend: {resolved}")
-    print(f"Configuration source: {source}")
+    print("Configuration source: process environment with Axion defaults")
 
 
 def _print_backend_list() -> None:
@@ -367,7 +164,7 @@ def _print_backend_list() -> None:
                 f"size={info['default_image_size']} | keys={info['key_hint']}"
             )
         print()
-    print("Recommendation: prefer CORE backends for everyday PPT generation.")
+    print("Axion-supported backend: GlenClaw OpenAI-compatible image generation.")
     _print_backend_resolution()
 
 
@@ -391,20 +188,15 @@ def _resolve_backend() -> tuple[object, str]:
     print(
         "Error: No image backend configured for Path A (image_gen.py).\n"
         "\n"
-        "If your host (Codex / Antigravity / Claude Code / etc.) has a native image\n"
-        "generation tool, do NOT run this script — switch to Path B: invoke the host's\n"
-        "image tool directly with the prompts from images/image_prompts.json and save\n"
-        "the outputs to images/<filename>. See references/image-generator.md §7 Path B.\n"
-        "\n"
-        "To use Path A instead, set IMAGE_BACKEND in one of these places:\n"
-        f"  1. Current process environment\n"
-        f"  2. {ENV_PATH}\n"
+        "Run this command through Axion Agent so its resolved GlenClaw credentials\n"
+        "are injected into the process environment.\n"
         "\n"
         f"Supported backends: {supported}\n"
         "\n"
         "Example:\n"
         "  IMAGE_BACKEND=openai\n"
-        "  OPENAI_API_KEY=sk-xxx\n"
+        "  OPENAI_API_BASE=https://api.glenclaw.com\n"
+        "  OPENAI_IMAGE_MODEL=image\n"
     )
     sys.exit(1)
 
@@ -1309,6 +1101,8 @@ def main() -> None:
                 f"--reference-image file not found: {args.reference_image}"
             )
 
+    apply_runtime_env_defaults()
+
     if args.list_backends:
         _print_backend_list()
         return
@@ -1347,13 +1141,12 @@ def main() -> None:
             sys.exit(1)
 
     try:
-        _load_image_env_file()
         _validate_runtime_config()
     except ValueError as e:
         print(f"Error: {e}")
         sys.exit(1)
 
-    # CLI --backend overrides the value loaded from .env
+    # CLI --backend overrides the environment default.
     if args.backend:
         os.environ["IMAGE_BACKEND"] = args.backend
 

@@ -53,7 +53,7 @@ title as its display layer. Keep an ordinary native title/subtitle in a
 separate text frame wherever the page needs a searchable,
 selectable, or outline-visible heading. Chrome and body remain native text. A
 confirmed `none`, explicit no-AI instruction,
-editable-only hook, or Offline Manual path does not activate this proactive
+editable-only hook does not activate this proactive
 rule; an explicit user-required lettering asset still follows the ordinary
 resource contract.
 

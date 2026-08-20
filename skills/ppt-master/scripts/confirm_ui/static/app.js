@@ -916,7 +916,7 @@
         },
         image_ai_path: {
             default: "auto",
-            builtin: "host-native"
+            builtin: "auto"
         }
     };
 

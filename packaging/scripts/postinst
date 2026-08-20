@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SYSTEM_USER="glenclaw"
+SYSTEM_GROUP="glenclaw"
+EXPECTED_UID="10001"
+EXPECTED_GID="10001"
+SKILLS_DIR="/opt/axion/skills"
+INSTALL_DIR="${SKILLS_DIR}/ppt-master"
+
+validate_identity() {
+  local group_gid
+  local user_gid
+  local user_uid
+
+  user_uid="$(id -u "${SYSTEM_USER}" 2>/dev/null || true)"
+  user_gid="$(id -g "${SYSTEM_USER}" 2>/dev/null || true)"
+  group_gid="$(getent group "${SYSTEM_GROUP}" | cut -d: -f3 || true)"
+  [[ "${user_uid}" == "${EXPECTED_UID}" ]] \
+    || { echo "${SYSTEM_USER} UID must be ${EXPECTED_UID}" >&2; exit 1; }
+  [[ "${user_gid}" == "${EXPECTED_GID}" ]] \
+    || { echo "${SYSTEM_USER} primary GID must be ${EXPECTED_GID}" >&2; exit 1; }
+  [[ "${group_gid}" == "${EXPECTED_GID}" ]] \
+    || { echo "${SYSTEM_GROUP} GID must be ${EXPECTED_GID}" >&2; exit 1; }
+}
+
+main() {
+  validate_identity
+  mkdir -p "${SKILLS_DIR}" "${INSTALL_DIR}"
+  chown -R "${SYSTEM_USER}:${SYSTEM_GROUP}" "${SKILLS_DIR}"
+  chmod -R u+rwX "${SKILLS_DIR}"
+}
+
+main "$@"

@@ -41,7 +41,7 @@ route selection. After selection, the active runtime authority owns execution.
 
 | Request condition | Generate-route behavior |
 |---|---|
-| One or more raster files represent page frames that must be reconstructed into a layered editable PPTX | Activate the Codex-supported [`image-to-pptx`](./profiles/image-to-pptx.md); normalize the represented frame roster and activate `quick-generate` directly without requiring a separate Quick request |
+| One or more raster files represent page frames that must be reconstructed into a layered editable PPTX | Activate the Axion-supported [`image-to-pptx`](./profiles/image-to-pptx.md); normalize the represented frame roster and activate `quick-generate` directly without requiring a separate Quick request |
 | Existing PPTX must preserve wording, page count, and page order 1:1 | Activate [`beautify-pptx`](./profiles/beautify-pptx.md); it selects `quick-generate` when that profile's explicit trigger also matches, otherwise `generate-pptx` |
 | The effective delivery purpose is recorded, self-running, or video-directed | Inside the already selected Default or explicit Quick runtime, load [`video-design`](../references/video-design.md) before whole-solution/page planning. This is a conditional design reference, not a profile or fifth route; notes, animation, audio, and optional native MP4 remain owned by their existing stages |
 | Explicit quick/fast, skip-strategy, or direct SVG-to-PPTX intent without an active fidelity profile | Load [`quick-generate`](./profiles/quick-generate.md) directly without loading `generate-pptx.md`: prepare sources/resources as needed, let the current agent decide without interaction, directly apply at most one exact workspace root per kind supplied for this run, otherwise use free design, omit Strategist/Confirm UI/spec/lock, hand-author SVG, run the lockless final checker, and export the final PPTX |
@@ -96,7 +96,7 @@ When a PPTX already contains native Master/Layout parts, `create-template` mirro
 
 | Input | Route behavior |
 |---|---|
-| One or more images containing page frames + explicit final-deck reconstruction intent | Generate PPTX with the Codex-supported, Quick-only [`image-to-pptx`](./profiles/image-to-pptx.md); normalize page frames first and do not infer reusable native structure from pixels |
+| One or more images containing page frames + explicit final-deck reconstruction intent | Generate PPTX with the Axion-supported, Quick-only [`image-to-pptx`](./profiles/image-to-pptx.md); normalize page frames first and do not infer reusable native structure from pixels |
 | Raw PPTX called a template + new content | Fill Native PPTX unless the user explicitly asks for a reusable template workspace |
 | Any supported reference bundle or direct-text brief + reusable template request | Create Template |
 | Current template workspace root + content | [`generate-pptx`](./generate-pptx.md) Stage-1 template choice |

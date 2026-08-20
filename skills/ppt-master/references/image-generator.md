@@ -141,7 +141,7 @@ The assembled prompt is **one cohesive paragraph**, not a bulleted list of tags.
 
 ### Step 4 — Write the manifest and execute the selected path
 
-Write `project/images/image_prompts.json` per §6, then follow §7. Default uses its confirmed path; Quick uses an explicit active-context path or `auto` without asking.
+Write `project/images/image_prompts.json` per §6, then follow the Axion GlenClaw execution in §7.
 
 ---
 
@@ -345,14 +345,13 @@ subject pose, scale, position, lighting, and visible style; do not trim or
 independently crop registered final outputs. Record the shared source and group
 relationship in the owning §VIII rows or Quick active-context resources.
 
-**Image to PPTX override — Codex required**: when
+**Image to PPTX override — GlenClaw reference editing**: when
 [`image-to-pptx.md`](../workflows/profiles/image-to-pptx.md) is active, follow
 its §3 per-region decision. A complete, separable, final-resolution-sufficient
-region may remain source-derived. Otherwise use Codex's native reference-image
-capability for required editing or reconstruction. Inspect every prepared
-member plus the final recomposition. Do not adapt `image_gen.py`, its manifest,
-or provider backends for this profile. Other hosts are unsupported. The
-ordinary Path A / Path B procedure below applies outside this profile.
+region may remain source-derived. Otherwise use GlenClaw's reference-image
+editing for required reconstruction. Inspect every prepared member plus the
+final recomposition. All automated image work uses the same GlenClaw execution
+described in §7.
 
 **Preparation procedure**:
 
@@ -400,9 +399,8 @@ still becomes an independent SVG/PPT picture object.
 > otherwise use one uniform exact {key HEX} matte with no gradient, texture,
 > spill, or extra marks.
 
-Outside Image to PPTX, Path A may use the existing single-image edit mode for
-each registered derivative; Path B may perform the same edits with the
-host-native image tool:
+Outside Image to PPTX, the GlenClaw path may use the existing single-image
+edit mode for each registered derivative:
 
 ```bash
 python3 scripts/image_gen.py "Remove the planned foreground subjects and reconstruct the hidden background; preserve the exact canvas" \
@@ -506,7 +504,7 @@ Layer 1 text is rasterized into the artwork — once generated it cannot be edit
 | Part of the artwork and stable — decorative lettering, artistic wordmark, hand-lettered word or phrase, figure-internal identifiers (axis labels, panel letters, units) | Layer 1 (image) OK |
 | Authoritative titles, page chrome, body copy, captions, data values — anything that must stay exact, searchable, editable, or may be reworded | Layer 2 (SVG) |
 
-Generation is non-deterministic on every backend, but **do not pre-judge by script or length** — never push text to SVG, shorten a headline, or downgrade `embedded` to `none` on the assumption that a particular script or a long string "won't render". Decide where text lives by the editability rule above, not by guessed rendering ability. Name the exact characters to bake literally in the prompt; do not re-read the generated image to verify them.
+Generation is non-deterministic, but **do not pre-judge by script or length** — never push text to SVG, shorten a headline, or downgrade `embedded` to `none` on the assumption that a particular script or a long string "won't render". Decide where text lives by the editability rule above, not by guessed rendering ability. Name the exact characters to bake literally in the prompt; do not re-read the generated image to verify them.
 
 **Prefer in-image**: text that is genuinely part of the artwork and will not be edited — a designed word or phrase, a stat lettering, a figure-internal label. String length never decides this; a multi-word phrase or two-line lockup qualifies exactly as a single word does.
 
@@ -575,7 +573,7 @@ Write `project/images/image_prompts.json` with this shape:
 | `items[].aspect_ratio` | yes | Container sizing | Passed to `image_gen.py --aspect_ratio` |
 | `items[].prompt` | yes | §4 assembly | The full assembled paragraph |
 | `items[].image_size` | no | Container sizing | `512px` / `1K` / `2K` / `4K` |
-| `items[].model` | no | Per-item execution override | Backend model for this item; otherwise the CLI/backend default wins |
+| `items[].model` | no | Per-item execution override | GlenClaw image model for this item; otherwise the injected/default image model wins |
 | `items[].alt_text` | no | Accessibility | Short caption |
 | `items[].slice_grid` | required for a placeable-element sheet | §4.3 sheet geometry | Exact `RxC` grid to pass to `slice_images.py --grid`; requires `slice_names` |
 | `items[].slice_names` | required for a placeable-element sheet | §4.3 sheet geometry | Comma-separated safe PNG basenames to pass to `slice_images.py --names`; requires exactly `rows*cols` unique outputs |
@@ -592,171 +590,40 @@ Write `project/images/image_prompts.json` with this shape:
 
 ---
 
-## 7. Generation Execution
+## 7. GlenClaw Generation Execution
 
-> Prerequisite: §3 Steps 1-3 complete; `images/image_prompts.json` exists and validates. The manifest is the shared audit/source contract for all modes. It does **not** imply that `image_gen.py --manifest` should run; that command is Path A only.
+> Prerequisite: §3 Steps 1–3 are complete and `images/image_prompts.json` exists and validates.
 
-### Path Selection (Deterministic)
-
-C (AI-generated) supports three implementation modes sharing one `image_prompts.json` source:
-
-| Trigger | Mode | Mechanism |
-|---|---|---|
-| `api` / `auto` permits Path A and `IMAGE_BACKEND` is configured | **Path A**: `image_gen.py --manifest` | One command runs the whole manifest with concurrency; status writes back per item |
-| `host-native` / `auto` permits Path B and the host has a native image tool | **Path B**: Host-native tool | Agent invokes the host's image capability; outputs land at `project/images/<filename>` |
-| Default confirmed `manual`, or Quick explicitly selected `manual` | **Offline Manual Mode** | Manifest stays on disk; user generates externally from `items[].prompt` and places files at `project/images/<filename>` |
-
-**Planning boundary**: Strategist and Quick decide AI visual jobs from communication need, not current backend configuration. Do not inspect configuration or probe a provider before planning. Resolve actual Path A/B capability only when this section executes the selected path.
-
-**Quick Generate selection**: an explicit user instruction for `api`, `host-native`, or `manual` retained in active context wins. When the user did not specify a path, select `auto` and try Path A → Path B without asking or creating a planning artifact. If an automated path exhausts, apply the Quick no-AI replan below; Offline Manual is entered only from an explicit `manual` instruction.
-
-**Default Generate selection — declared-procedure fallback when no path is confirmed**: the confirmed user choice wins. When neither channel confirmed a specific path, Generate Step 4 records the effective choice as `auto`; in Default, `auto` authorizes Path A → Path B only and never pre-authorizes Offline Manual. A missing/blank/unknown project value is not an implicit API or manual-generation authorization:
-
-0. **Confirmed override (wins)** — honor `AI Image Acquisition Path` from `design_spec.md §I`. Generate Step 4 already consumed the final confirmation into that durable artifact; do not reopen `result.json` here. If the recorded choice is set and not `auto`, honor it directly, **even when it contradicts `IMAGE_BACKEND`**:
-   - `api` → **Path A** (`image_gen.py --manifest`).
-   - `host-native` → **Path B** (host's native image tool) — skip A and do **not** run `image_gen.py --manifest`, *even if `IMAGE_BACKEND` is configured*.
-   - `manual` → **Offline Manual** (write prompts, render the Markdown sidecar, hand off; do **not** run `image_gen.py --manifest`).
-   If an explicitly chosen automated path is unavailable or still fails after its retry, do not switch provider or presume manual fulfillment; enter the Default recovery decision below. Only when the Design Spec records `auto` may both automated paths be attempted. A legacy project missing this Design Spec row returns to Step 4 recovery to consume persisted confirmation once and record it; Image_Generator does not inspect the confirmation channel itself.
-1. **Try Path A** — if `IMAGE_BACKEND` is configured (env or `.env`), run `image_gen.py --manifest`. If it fails twice in a row, fall to Path B.
-2. **Try Path B** — if `IMAGE_BACKEND` was not configured (A skipped), or A failed, and the host has a native image tool (Codex / Antigravity / Claude Code / similar), the agent invokes the host's image capability directly.
-3. **Resolve exhausted automation** — Default enters the recovery decision below; Quick applies the no-AI replan below.
-
-**Hard rule**: normal execution does not reopen path selection. The only Default exception is the one recovery decision after the confirmed automated path or `auto`'s A → B sequence is actually unavailable/exhausted. Quick uses its explicit active-context instruction or automated path, then applies its declared no-AI replan without asking when automation exhausts.
-
-> All three modes share one output contract: file at `project/images/<filename>`. Step 6 SVG references are mode-agnostic.
-
-### Path A — `image_gen.py --manifest` (Default)
+Axion has one supported automated image path: run the manifest through the
+GlenClaw OpenAI-compatible service. The host injects the resolved runtime
+credentials and endpoint into the process environment. Do not inspect dotenv
+files, ask the user for provider configuration, or switch to another backend.
 
 ```bash
-python3 scripts/image_gen.py \
-  --manifest project/images/image_prompts.json \
-  --output project/images
+python3 "${SKILL_DIR}/scripts/image_gen.py" --manifest <project_path>/images/image_prompts.json
+python3 "${SKILL_DIR}/scripts/image_gen.py" --render-md <project_path>/images/image_prompts.json
 ```
 
-The CLI validates the file behind every `Generated` row before skipping it, iterates retryable rows with bounded adaptive concurrency, and atomically writes each status. A missing/corrupt generated file returns to `Failed`; persistent rate limits finish this run as retryable `Failed` instead of looping forever.
+Execution rules:
 
-**Parameters**:
+1. Use manifest mode even for one image; positional mode is only for an explicit
+   one-off repair outside the presentation pipeline.
+2. Keep outputs beside the manifest at `<project_path>/images/<filename>`.
+3. Let the CLI apply its bounded concurrency and write each item status back.
+4. Verify every required file exists before continuing to image analysis or
+   page authoring.
+5. On failure, retry the same failed item once through the same GlenClaw path.
+   If it still fails, preserve the failed status and concrete error. Default
+   Generate pauses with one consolidated recovery question; Quick Generate
+   removes the failed AI job and preserves the communication goal with native
+   editable SVG/text or already prepared assets.
+6. Never mark an item `Generated` without the expected file, and never change
+   provider, model, or endpoint to conceal a failure.
 
-| Parameter | Short | Description | Default |
-|---|---|---|---|
-| `--manifest` | - | Path to `image_prompts.json` | — |
-| `--concurrency` | - | Max concurrent requests; halves on rate-limit, min 1 | `IMAGE_CONCURRENCY` env or `3` |
-| `--image_size` | - | Default size (`512px`/`1K`/`2K`/`4K`); per-item `image_size` wins | Backend default; see `--list-backends` |
-| `--output` | `-o` | Output directory | Manifest's parent dir |
-| `--backend` | `-b` | Override `IMAGE_BACKEND` for this run | env |
-| `--model` | `-m` | Default model; per-item `model` wins | Backend default |
-| `--list-backends` | - | Print support tiers and exit | — |
-
-> The single-image form `image_gen.py "prompt" --filename ...` is preserved for ad-hoc one-offs (re-rolling a single image) but is no longer the primary path.
-
-**Configuration sources**:
-- Current process environment variables
-- First `.env` found in this order: current working directory, skill directory (e.g. `~/.agents/skills/ppt-master/.env`), clone repo root, `~/.ppt-master/.env`
-
-Precedence:
-- Current process environment wins
-- `.env` fills missing values only
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `IMAGE_BACKEND` | Required | Backend identifier; run `image_gen.py --list-backends` for the current set |
-| `IMAGE_CONCURRENCY` | Optional | Manifest-mode default concurrency (CLI `--concurrency` wins) |
-| `{PROVIDER}_API_KEY` | Required | Provider-specific API key, e.g. `GEMINI_API_KEY`, `ZHIPU_API_KEY` |
-| `{PROVIDER}_BASE_URL` | Optional | Provider-specific custom endpoint |
-| `{PROVIDER}_MODEL` | Optional | Provider-specific model override |
-| `OPENAI_SIZE_PRESET` | Optional | OpenAI-compatible size mapping: `auto`, `legacy`, `gpt-image`, `gpt-image-2`, `dall-e-2` |
-| `OPENAI_RESPONSE_FORMAT` | Optional | OpenAI-compatible response field: `auto`, `b64_json`, `url`, `omit` |
-| `OPENAI_QUALITY` | Optional | OpenAI-compatible quality field: `auto`, `omit`, `low`, `medium`, `high`, `standard`, `hd` |
-
-> Use provider-specific names only (e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`). See `.env.example` in clone mode or `${SKILL_DIR}/.env.example` in skill-install mode for the full set per backend.
-
-> Note: OpenAI-compatible platforms that reject OpenAI-specific fields stay under `IMAGE_BACKEND=openai`; configure the `OPENAI_*` compatibility knobs instead of adding a provider-specific backend.
-
-> `IMAGE_API_KEY`, `IMAGE_MODEL`, and `IMAGE_BASE_URL` are intentionally unsupported.
-
-> If `.env` or the current environment contains multiple provider configs, `IMAGE_BACKEND` explicitly selects the active one.
-
-**Support tiers (recommended usage)**: Core / Extended / Experimental. Run `image_gen.py --list-backends` for the current assignments.
-
-**Concurrency (manifest mode)**:
-- Default 3 concurrent requests, halves on the first rate-limit response, minimum 1 (= serial fallback)
-- Rate-limited items requeue automatically; per-item failures are recorded with `last_error` and skipped
-- Interrupting mid-run is safe — completed items keep `status: Generated` and are skipped on re-run
-- On normal completion the Markdown sidecar is re-rendered automatically; if the run is interrupted, run `--render-md` manually to refresh the sidecar
-
-### Path B — Host-Native Image Tool
-
-Triggered automatically when `IMAGE_BACKEND` is not configured (or Path A fails) **and** the host provides a native image generation tool (Codex, Antigravity, Claude Code's image tool, and similar). No user prompting required — the agent detects the host capability and proceeds. The user may also explicitly name this path ("use Codex's image tool") to force it even when `IMAGE_BACKEND` is configured.
-
-- Agent invokes the host's native image tool directly; prompts come from `items[].prompt`
-- Do **not** run `image_gen.py --manifest` in Path B. That command is Path A and may use configured API/proxy backends even when the user confirmed host-native.
-- Still run `python3 scripts/image_gen.py --render-md project/images/image_prompts.json` so the human-readable sidecar exists without touching any backend.
-- **Batch for speed, mind the rate**: when the host can run independent tool calls in parallel (e.g. Claude Code issues independent calls concurrently), fire several generations together in modest groups — a few rows at a time (~3–4), not the whole manifest at once — so their latency overlaps without flooding the host's image quota. When the host only runs tools serially, generate one row at a time. This mirrors Path A's default concurrency of 3.
-- Outputs **must** land at `project/images/<filename-from-resource-list>`. Match the Image Resource List dimensions when the host supports arbitrary sizes. Hosts with **fixed native resolutions** (common — e.g. ~1672x941 landscape / ~1086x1448 portrait) generate at the closest native size and backfill the actual pixels into the resource list `Dimensions` column, as slice rows do after slicing. Do **not** upscale the file to fake the requested size (interpolation adds no detail); minor display-side upscaling (up to ~1.3x in practice) may surface as a non-blocking quality-checker warning and requires no acknowledgement.
-- Mark each item's `status` `Generated` in the manifest the moment its file lands — as each completes, not in one pass at the end (so an interrupted batch leaves accurate state)
-- Executor downstream is path-agnostic — no spec change required between Path A and Path B
-
-### Offline Manual Mode (C's third implementation mode)
-
-**Trigger**: Default reaches this mode only after the user confirmed `manual` in final Stage 2 or at the exhausted-automation recovery decision. Quick reaches it only through an explicit `manual` instruction.
-
-**Workflow** (manual fulfillment is already authorized; do not ask again inside acquisition):
-
-1. Verify `images/image_prompts.json` was written
-2. Set `status: "Needs-Manual"` on every affected item per [`image-base.md`](./image-base.md) §6
-3. Apply the mode boundary:
-   - Default Generate: continue to Step 6; Executor draws a dashed placeholder, but Step 7 blocks every export command until the supplied file is validated and the placeholder is replaced
-   - Quick Generate: retain the prompt and `Needs-Manual` status, and block direct export until every required supplied file is validated and its row is reconciled to `Generated`
-4. Print one consolidated handoff to the user:
-   - Filenames awaiting manual generation
-   - Pointer to `images/image_prompts.md` (paste-ready `### Image N:` block per item) or `image_prompts.json` (`items[].prompt`)
-   - Target placement: `project/images/<filename>` matching the resource list exactly
-   - Continuation: Default Generate re-runs Step 7; Quick may validate the supplied file, rerun its resource gate and final checker, then use `--quick-generate` only while the original active context remains available — otherwise start a clean Quick run
-
-**User-initiated**: When Strategist Step 4 captured `manual` in Default Generate, or the user explicitly requested `manual` in the Quick Generate active context, Path A is skipped from the start.
-
-#### Default Exhausted-Automation Decision
-
-When required AI rows remain unresolved after Default's confirmed automated path or `auto`'s eligible A → B sequence, keep them `Failed` and pause once with one consolidated list of filenames, prompts, attempted paths, and concrete errors. Ask the user to choose exactly one outcome:
-
-1. **Repair and retry** — wait for the user to repair the named key, balance, endpoint, or host capability, then rerun only the same confirmed path; for `auto`, rerun the repaired eligible path and retain the A → B permission. If it fails again, return to this same decision with the new error.
-2. **Generate manually** — update `design_spec.md §I` to `AI Image Acquisition Path: manual` as the newer explicit override, mark the affected rows `Needs-Manual`, render the handoff above, and continue authoring only up to the Step 7 image-readiness gate.
-3. **Cancel affected AI images** — return to Generate Step 4 as a post-confirmation override; remove the affected `ai` / dependent `slice` rows and revise their §IX page jobs plus lock rows to native editable text/SVG or already-confirmed non-AI sources. If no AI rows remain, set the path to `not applicable` and remove the AI Image Strategy subsection. Never introduce a new image source or silently drop required communication content.
-
-Do not create `Needs-Manual` state in Default before manual fulfillment is explicitly confirmed.
-
-> Default Generate tolerates `Needs-Manual` rows through authoring and resumes
-> at Step 7. An explicitly manual Quick run preserves the same operational
-> manifest and handoff but does not run `--quick-generate` while a required row still says
-> `Needs-Manual`. If the original active context remains available, validate a
-> later supplied file and update it to `Generated`; otherwise start a clean
-> Quick run rather than treating the manifest as a resumable design record.
-
-#### Quick Exhausted-Automation No-AI Replan
-
-When an automated AI path or required dependent slicing remains unresolved after its allowed attempts in Quick, do not ask the user and do not enter Offline Manual. Retain the affected filename, attempted path, concrete error, and replacement carrier in active context for the final Quick completion report; remove the affected `ai` row plus dependent `slice` rows from the active resource plan and remove the corresponding manifest item. Re-render `images/image_prompts.md` when other AI items remain; when none remain, remove both `images/image_prompts.json` and `images/image_prompts.md` so no stale failed row survives the replan. Preserve the communication job with native editable text/SVG or already prepared non-AI assets and continue the same run. Do not introduce another image source merely to replace the failed AI job. If the user still wants AI imagery, they must repair the generation capability and start a new Quick run.
-
-#### AI-specific Failure Handling (extends image-base.md §6)
-
-When the path is `auto` and Path A's backend fails twice in a row:
-
-1. Do not halt. Automatically attempt to fall back to **Path B (Host-Native Tool)**.
-2. If Path B also fails or is unavailable, Default enters the three-outcome decision above without changing the row to `Needs-Manual`; Quick applies the no-AI replan above.
-3. Report the filename, prompt used, and error message through the owning outcome.
-
-When `api` or `host-native` was explicitly confirmed, failure or unavailability does not authorize an automated provider switch. Retry the confirmed path once; if it still fails, Default enters the decision above, while Quick applies the no-AI replan above.
-
-> If the alternate platform watermarks outputs (e.g. Gemini web), the repository includes `scripts/gemini_watermark_remover.py`.
-
-#### Guardrails (All Modes)
-
-**Hard rule**:
-
-- Do not claim an image is generated without an actual file at the expected path
-- `Needs-Manual` is set only when manual fulfillment was confirmed in Default or explicitly selected in Quick — not as a way to skip work that automation could have done
-- Status transitions are evidence-driven: a file at the expected path permits `Generated`; exhausted Default automation remains `Failed` until a retry succeeds or the user chooses manual or cancellation; exhausted Quick AI rows are removed only through the declared no-AI replan
-
----
+The supported backend list is intentionally a one-entry allowlist. Running
+`image_gen.py --list-backends` must report only `openai`, labelled as the
+GlenClaw OpenAI-compatible route. The image client uses the image-model value
+injected by Axion and does not reuse the text LLM model selection.
 
 ## 8. Common Issues & Variant Workflow
 
@@ -796,7 +663,7 @@ Diagnose the failure category, adjust the **one specific dimension** responsible
 **Variant workflow**:
 
 1. Set the unsatisfactory item's `status` back to `Pending` and update its `prompt` in place
-2. Re-run the same resolved path used for the original item: Path A may re-run `image_gen.py --manifest` (only that item is re-processed); Path B uses the host-native tool again for that item; Offline Manual re-renders the sidecar and hands off
+2. Re-run `image_gen.py --manifest`; only the failed item is re-processed
 3. To try multiple stylistic approaches, append additional items with distinct filenames (e.g. `cover_bg_v2.png`) rather than overwriting
 
 ---

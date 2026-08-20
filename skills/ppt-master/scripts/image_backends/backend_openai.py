@@ -6,9 +6,10 @@ Generates images via OpenAI-compatible APIs (OpenAI, local models like Qwen-Imag
 Used by image_gen.py as a backend module.
 
 Configuration keys:
-  OPENAI_API_KEY   (required) API key
-  OPENAI_BASE_URL  (optional) Custom API endpoint (e.g. http://127.0.0.1:3000/v1)
-  OPENAI_MODEL     (optional) Model name (default: gpt-image-2)
+  OPENAI_API_KEY     (required) API key injected by Axion Agent
+  OPENAI_API_BASE    (optional) Custom API endpoint (default: https://api.glenclaw.com)
+  OPENAI_IMAGE_MODEL (optional) Image model name (default: image)
+  OPENAI_MODEL       (text LLM only) Ignored by image generation
   OPENAI_SIZE_PRESET         (optional) auto, legacy, gpt-image, gpt-image-2, or dall-e-2
   OPENAI_RESPONSE_FORMAT     (optional) auto, b64_json, url, or omit
   OPENAI_QUALITY             (optional) auto, omit, low, medium, high, standard, or hd
@@ -144,7 +145,7 @@ IMAGE_SIZE_TO_QUALITY = {
     "4K":    "high",
 }
 
-DEFAULT_MODEL = "gpt-image-2"
+DEFAULT_MODEL = "image"
 
 GPT_IMAGE_2_MIN_PIXELS = 655_360
 GPT_IMAGE_2_MAX_PIXELS = 8_294_400
@@ -179,7 +180,7 @@ OPENAI_QUALITY_VALUES = {
 GPT_IMAGE_BACKGROUNDS = {"auto", "opaque", "transparent"}
 GPT_IMAGE_MODERATION_VALUES = {"auto", "low"}
 GPT_IMAGE_INPUT_FIDELITY_VALUES = {"high", "low"}
-DEFAULT_BASE_URL = "https://api.openai.com/v1"
+DEFAULT_BASE_URL = "https://api.glenclaw.com"
 
 # Signals to image_gen.py that this backend can accept a reference_image
 # (image-to-image edit via /v1/images/edits). Other backends omit this marker.
@@ -683,10 +684,10 @@ def generate(prompt: str,
     """
     OpenAI-compatible image generation (or image-to-image edit) with retry.
 
-    Reads credentials from the current process environment or a `.env` file:
+    Reads credentials from the current process environment:
       OPENAI_API_KEY
-      OPENAI_BASE_URL
-      OPENAI_MODEL (optional override)
+      OPENAI_API_BASE
+      OPENAI_IMAGE_MODEL (optional override)
 
     Args:
         prompt: Prompt text (edit instruction when reference_image is set)
@@ -694,7 +695,7 @@ def generate(prompt: str,
         image_size: Image size, mapped to OpenAI quality
         output_dir: Output directory
         filename: Output filename (without extension)
-        model: Model name (default: gpt-image-2)
+        model: Model name (default: image)
         max_retries: Maximum number of retries
         reference_image: Optional source image path. When set, the request
             goes to /v1/images/edits (image-to-image) instead of
@@ -704,7 +705,7 @@ def generate(prompt: str,
         Path of the saved image file
     """
     if model is None:
-        model = os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
+        model = os.environ.get("OPENAI_IMAGE_MODEL") or DEFAULT_MODEL
 
     image_size = normalize_image_size(image_size)
 
@@ -723,10 +724,10 @@ def generate(prompt: str,
     )
 
     api_key = os.environ.get("OPENAI_API_KEY")
-    base_url = os.environ.get("OPENAI_BASE_URL")
+    base_url = os.environ.get("OPENAI_API_BASE") or DEFAULT_BASE_URL
     if not api_key:
         raise ValueError(
-            "No API key found. Set OPENAI_API_KEY in the current environment or a .env file."
+            "No API key found. Run through Axion Agent or set OPENAI_API_KEY in the current environment."
         )
 
     last_error = None

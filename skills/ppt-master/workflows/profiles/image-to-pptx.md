@@ -20,12 +20,10 @@ restored as native text, and source graphics remain visually exact.
 to restore the represented pages as a PPTX. Ordinary photos, illustrations, and
 moodboards used only as resources for a new story do not activate this profile.
 
-**Support boundary — Codex required**: this profile is currently documented
-and validated for Codex because it depends on Codex's native reference-image
-generation/editing capability and direct inspection of every derived layer.
-Other hosts are not adapted or supported by this workflow; they may happen to
-work, but the repository makes no compatibility claim and defines no alternate
-host or generic image-backend fallback for this profile.
+**Support boundary — Axion/GlenClaw**: this profile uses GlenClaw's
+OpenAI-compatible reference-image editing plus direct inspection of every
+derived layer. Axion injects the runtime endpoint and credentials; the workflow
+defines no alternate image backend.
 
 **Hard rule — Quick only**: this profile always loads
 [`quick-generate.md`](./quick-generate.md) and never
@@ -266,17 +264,15 @@ branded/data graphic is unresolved evidence and blocks successful delivery.
 When any `image_layer` or low-resolution `source_graphic` requires reference
 editing or generation, load
 [`image-base.md`](../../references/image-base.md) and
-[`image-generator.md`](../../references/image-generator.md). The current Codex
-main agent resolves the layer stack directly, uses Codex's native
-reference-image capability, and finishes every required layer before SVG
-authoring. Do not adapt `image_gen.py`, its generic manifest, or provider
-backends for this profile.
+[`image-generator.md`](../../references/image-generator.md). The current main
+agent resolves the layer stack directly, uses GlenClaw reference-image editing,
+and finishes every required layer before SVG authoring.
 
 - Use `text_policy: none` for scene reconstruction layers. Use `embedded` only
   when an exact visible wordmark/letterform is integral to a reconstructed
   source graphic; ordinary slide text always remains native.
-- Exhaust the available Codex image path automatically; block before export if a
-  required layer remains `Needs-Manual`.
+- Exhaust the GlenClaw image path automatically; block before export if a
+  required layer remains unresolved.
 - Preserve each prepared image layer's source page/region, source hash,
   realization method, operation, output path/hash, registration group, and
   z-order in the applicable operational evidence; include prompt and
@@ -319,8 +315,8 @@ Verify each page against its canonical image:
 
 If a generated layer drifts, retry from the canonical reference with a narrower
 edit instruction. Do not compensate by changing native text/graphics or by
-flattening the full page. If the Codex image path is exhausted,
-mark the affected layer `Needs-Manual` and block successful export.
+flattening the full page. If the GlenClaw image path is exhausted, keep the
+affected layer failed and block successful export.
 
 ```markdown
 ## ✅ Image to PPTX Complete
