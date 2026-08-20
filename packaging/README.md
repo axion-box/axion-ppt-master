@@ -1,19 +1,28 @@
 # Debian packaging
 
 `packaging/build.py` builds the tracked `skills/ppt-master/` tree as an
-`axion-ppt-master` Debian package. It requires Python 3, Git, `dpkg`, and
-`dpkg-deb`; it does not install presentation runtime dependencies.
+`axion-ppt-master` Debian package inside a fixed package-builder Docker image.
+The host requires Python 3, Docker, and a complete Git worktree. The container
+provides Git, `dpkg`, and `dpkg-deb`; the package does not install presentation
+runtime dependencies.
 
 ```bash
 python3 packaging/build.py
-python3 packaging/build.py --version 0.2.0 --arch amd64
-python3 packaging/build.py --version 0.2.0 --arch arm64 --beta \
-  --output-dir /tmp/ppt-master-debs
+python3 packaging/build.py --arch amd64
+python3 packaging/build.py --arch arm64 -V 0.2.0 --beta \
+  -o /tmp/axion-ppt-master_arm64.deb
 ```
 
-The defaults are read from `packaging/VERSION`, use the `arm64` architecture,
-and write to the repository `dist/` directory. `--beta` appends `~beta`, so the
-example above produces `axion-ppt-master_0.2.0~beta_arm64.deb`.
+The target architecture maps to these fixed images:
+
+- `amd64`: `axion-registry.cn-beijing.cr.aliyuncs.com/axion/package-builder:1.3.0-ubuntu22.04-amd64`
+- `arm64`: `axion-registry.cn-beijing.cr.aliyuncs.com/axion/package-builder:1.3.0-debian12-arm64`
+
+`--arch` defaults to the current machine architecture and accepts `amd64` or
+`arm64`. The package version defaults to `packaging/VERSION`; `-V/--version`
+overrides it, and `--beta` appends `~beta`. The default output is
+`packaging/dist/axion-ppt-master_<version>_<arch>.deb`. `-o/--output` selects an
+explicit Deb file, including a path outside the repository.
 
 Only files tracked by Git below `skills/ppt-master/` enter the package. Local
 `.env` files, caches, generated projects, and other untracked files are excluded.
@@ -23,7 +32,7 @@ the target system to provide `glenclaw:glenclaw` with UID/GID `10001:10001`.
 Inspect a result with:
 
 ```bash
-dpkg-deb -f dist/axion-ppt-master_0.1.1_arm64.deb \
+dpkg-deb -f packaging/dist/axion-ppt-master_0.1.1_arm64.deb \
   Package Version Architecture Installed-Size
-dpkg-deb -c dist/axion-ppt-master_0.1.1_arm64.deb
+dpkg-deb -c packaging/dist/axion-ppt-master_0.1.1_arm64.deb
 ```

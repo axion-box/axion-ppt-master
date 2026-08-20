@@ -367,15 +367,16 @@ PPT Master 会优先读取当前进程环境变量，然后按顺序读取第一
 
 ### Debian 软件包
 
-在 Debian 系构建环境中，可以直接将 Git 已跟踪的 PPT Master skill 打成 Axion Deb，
+Git 已跟踪的 PPT Master skill 会在固定 Docker 构建镜像中打成 Axion Deb，
 不会把本地 `.env` 或生成内容带入软件包：
 
 ```bash
-python3 packaging/build.py --version 0.1.1 --arch arm64
+python3 packaging/build.py -V 0.1.1 --arch arm64
 ```
 
-构建器支持 `arm64`、`amd64`、自定义 `--output-dir`，以及追加 Debian 预发布后缀
-`~beta` 的 `--beta` 开关。完整接口见 [`packaging/README.md`](./packaging/README.md)。
+构建器支持 `--arch auto|amd64|arm64`、`-o/--output`、`-V/--version`，以及追加
+Debian 预发布后缀 `~beta` 的 `--beta` 开关。完整接口见
+[`packaging/README.md`](./packaging/README.md)。
 
 | | 文档 | 说明 |
 |---|------|------|

@@ -5,16 +5,16 @@ PPT Master - Debian Package Builder
 Build the tracked PPT Master skill files into an axion-ppt-master Deb package.
 
 Usage:
-    python3 packaging/build.py [--version VERSION] [--arch ARCH]
-        [--output-dir DIR] [--beta]
+    python3 packaging/build.py [--arch ARCH] [-o OUTPUT] [-V VERSION] [--beta]
 
 Examples:
     python3 packaging/build.py
-    python3 packaging/build.py --version 0.2.0 --arch amd64 --beta
-    python3 packaging/build.py --output-dir /tmp/ppt-master-debs
+    python3 packaging/build.py -V 0.2.0 --arch amd64 --beta
+    python3 packaging/build.py -o /tmp/axion-ppt-master.deb
 
 Dependencies:
-    git, dpkg, and dpkg-deb
+    Host: Docker
+    Container: git, dpkg, and dpkg-deb
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import os
 import pathlib
+import platform
 import shutil
 import stat
 import subprocess
@@ -35,9 +36,16 @@ SKILL_ROOT = PROJECT_ROOT / "skills" / "ppt-master"
 VERSION_FILE = PACKAGE_ROOT / "VERSION"
 POSTINST_FILE = PACKAGE_ROOT / "scripts" / "postinst"
 PACKAGE_NAME = "axion-ppt-master"
-DEFAULT_ARCH = "arm64"
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "dist"
+DIST_ROOT = PACKAGE_ROOT / "dist"
 SKILL_REPOSITORY_PREFIX = "skills/ppt-master/"
+CONTAINER_BUILD_ENV = "AXION_PACKAGING_CONTAINER_BUILD"
+BUILDER_IMAGE_REPOSITORY = (
+    "axion-registry.cn-beijing.cr.aliyuncs.com/axion/package-builder"
+)
+BUILDER_IMAGE_TAGS = {
+    "amd64": "1.3.0-ubuntu22.04-amd64",
+    "arm64": "1.3.0-debian12-arm64",
+}
 
 
 class BuildError(RuntimeError):
@@ -52,20 +60,21 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
+        "--arch",
+        choices=("auto", "amd64", "arm64"),
+        default="auto",
+        help="Target architecture; defaults to the current machine architecture.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=pathlib.Path,
+        help="Deb output file; defaults to packaging/dist/<name>_<version>_<arch>.deb.",
+    )
+    parser.add_argument(
+        "-V",
         "--version",
         help="Debian package version; defaults to packaging/VERSION.",
-    )
-    parser.add_argument(
-        "--arch",
-        choices=("arm64", "amd64"),
-        default=DEFAULT_ARCH,
-        help=f"Debian architecture (default: {DEFAULT_ARCH}).",
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=pathlib.Path,
-        default=DEFAULT_OUTPUT_DIR,
-        help="Deb output directory (default: repository dist/).",
     )
     parser.add_argument(
         "--beta",
@@ -78,6 +87,7 @@ def build_parser() -> argparse.ArgumentParser:
 def _run(command: list[str], *, capture: bool = False) -> str:
     """Run one checked command from the repository root."""
 
+    print("+ " + " ".join(command), file=sys.stderr, flush=True)
     completed = subprocess.run(
         command,
         cwd=PROJECT_ROOT,
@@ -89,8 +99,8 @@ def _run(command: list[str], *, capture: bool = False) -> str:
     return completed.stdout.strip() if completed.stdout is not None else ""
 
 
-def _require_commands() -> None:
-    """Require every external tool used by the builder."""
+def _require_container_commands() -> None:
+    """Require every external tool used inside the builder container."""
 
     missing = [name for name in ("git", "dpkg", "dpkg-deb") if shutil.which(name) is None]
     if missing:
@@ -99,6 +109,117 @@ def _require_commands() -> None:
             + ", ".join(missing)
             + "; install the Debian dpkg tools and Git"
         )
+
+
+def _normalize_arch(raw: str) -> str:
+    """Normalize machine architecture names to Debian architecture names."""
+
+    value = raw.strip().lower()
+    if value in {"amd64", "x86_64"}:
+        return "amd64"
+    if value in {"arm64", "aarch64"}:
+        return "arm64"
+    raise BuildError(f"unsupported architecture: {raw}")
+
+
+def _resolve_arch(requested: str) -> str:
+    """Resolve an explicit target architecture or use the host architecture."""
+
+    if requested != "auto":
+        return _normalize_arch(requested)
+    return _normalize_arch(platform.machine())
+
+
+def _builder_image(arch: str) -> str:
+    """Return the fixed package-builder image for one Debian architecture."""
+
+    try:
+        tag = BUILDER_IMAGE_TAGS[arch]
+    except KeyError as error:
+        raise BuildError(f"unsupported architecture: {arch}") from error
+    return f"{BUILDER_IMAGE_REPOSITORY}:{tag}"
+
+
+def _resolve_output_path(
+    requested: pathlib.Path | None,
+    *,
+    arch: str,
+    version: str,
+) -> pathlib.Path:
+    """Resolve the requested Deb path or use the standard dist filename."""
+
+    if requested is None:
+        return DIST_ROOT / f"{PACKAGE_NAME}_{version}_{arch}.deb"
+
+    output = requested.expanduser()
+    if not output.is_absolute():
+        output = pathlib.Path.cwd() / output
+    output = output.absolute()
+    if output.suffix != ".deb":
+        raise BuildError("-o/--output must name a .deb file")
+    return output
+
+
+def _docker_build_command(args: argparse.Namespace, *, arch: str) -> list[str]:
+    """Build the Docker command that re-enters this script in the builder."""
+
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        f"linux/{arch}",
+        "--user",
+        f"{os.getuid()}:{os.getgid()}",
+        "--env",
+        f"{CONTAINER_BUILD_ENV}=1",
+        "--env",
+        "HOME=/tmp/axion-package-builder-home",
+        "--mount",
+        f"type=bind,src={PROJECT_ROOT},dst={PROJECT_ROOT}",
+        "--workdir",
+        str(PROJECT_ROOT),
+    ]
+
+    output: pathlib.Path | None = None
+    if args.output is not None:
+        output = _resolve_output_path(
+            args.output,
+            arch=arch,
+            version="0.0.0",
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output_parent = output.parent.resolve()
+        if not output_parent.is_relative_to(PROJECT_ROOT):
+            command.extend(
+                [
+                    "--mount",
+                    f"type=bind,src={output_parent},dst={output_parent}",
+                ]
+            )
+
+    command.extend(
+        [
+            _builder_image(arch),
+            "python3",
+            "packaging/build.py",
+            "--arch",
+            arch,
+        ]
+    )
+    if output is not None:
+        command.extend(["--output", str(output)])
+    if args.version is not None:
+        command.extend(["--version", args.version])
+    if args.beta:
+        command.append("--beta")
+    return command
+
+
+def _build_with_docker(args: argparse.Namespace, *, arch: str) -> None:
+    """Run the package build in the architecture-specific builder image."""
+
+    _run(_docker_build_command(args, arch=arch))
 
 
 def _read_default_version() -> str:
@@ -250,13 +371,14 @@ def _validate_deb(path: pathlib.Path, version: str, arch: str) -> None:
             raise BuildError("built package does not contain an executable postinst")
 
 
-def build_package(version: str, arch: str, output_dir: pathlib.Path) -> pathlib.Path:
+def build_package(version: str, arch: str, output: pathlib.Path) -> pathlib.Path:
     """Build and validate one axion-ppt-master Deb package."""
 
-    output_dir = output_dir.expanduser().resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    target = output_dir / f"{PACKAGE_NAME}_{version}_{arch}.deb"
-    with tempfile.TemporaryDirectory(prefix="axion-ppt-master-build-") as temporary:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix=".build-",
+        dir=output.parent,
+    ) as temporary:
         temporary_root = pathlib.Path(temporary)
         package_root = temporary_root / "root"
         skill_destination = package_root / "opt" / "axion" / "skills" / "ppt-master"
@@ -264,7 +386,7 @@ def build_package(version: str, arch: str, output_dir: pathlib.Path) -> pathlib.
         installed_size = max(1, (payload_bytes + 1023) // 1024)
         _write_control(package_root / "DEBIAN", version, arch, installed_size)
         _normalize_directory_modes(package_root)
-        candidate = temporary_root / target.name
+        candidate = temporary_root / output.name
         print(f"Building {PACKAGE_NAME} {version} for {arch}", file=sys.stderr)
         _run(
             [
@@ -276,8 +398,8 @@ def build_package(version: str, arch: str, output_dir: pathlib.Path) -> pathlib.
             ]
         )
         _validate_deb(candidate, version, arch)
-        os.replace(candidate, target)
-    return target
+        os.replace(candidate, output)
+    return output
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -286,9 +408,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        _require_commands()
+        arch = _resolve_arch(args.arch)
+        if os.environ.get(CONTAINER_BUILD_ENV) != "1":
+            if shutil.which("docker") is None:
+                raise BuildError("missing required command: docker")
+            _build_with_docker(args, arch=arch)
+            return 0
+
+        _require_container_commands()
         version = _resolve_version(args.version, args.beta)
-        package_path = build_package(version, args.arch, args.output_dir)
+        output = _resolve_output_path(args.output, arch=arch, version=version)
+        print(f"package arch: {arch}", file=sys.stderr)
+        print(f"package version: {version}", file=sys.stderr)
+        print(f"package output: {output}", file=sys.stderr)
+        package_path = build_package(version, arch, output)
     except (BuildError, OSError, subprocess.CalledProcessError, ValueError) as error:
         print(f"Deb build failed: {error}", file=sys.stderr)
         return 1

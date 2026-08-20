@@ -362,15 +362,15 @@ PPT Master reads the current process environment first, then the first `.env` fo
 
 ### Debian package
 
-On Debian-based build hosts, the tracked PPT Master skill can be packaged for
-Axion without copying local `.env` files or generated content:
+The tracked PPT Master skill can be packaged for Axion inside a fixed Docker
+builder image without copying local `.env` files or generated content:
 
 ```bash
-python3 packaging/build.py --version 0.1.1 --arch arm64
+python3 packaging/build.py -V 0.1.1 --arch arm64
 ```
 
-The builder supports `arm64` and `amd64`, a custom `--output-dir`, and a
-`--beta` flag that appends the Debian pre-release suffix `~beta`. See
+The builder supports `--arch auto|amd64|arm64`, `-o/--output`, `-V/--version`,
+and a `--beta` flag that appends the Debian pre-release suffix `~beta`. See
 [`packaging/README.md`](./packaging/README.md) for the complete interface.
 
 | | Document | Description |
