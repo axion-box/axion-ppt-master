@@ -30,6 +30,7 @@ from resource_paths import (
     resolve_external_image_reference,
     svg_image_payload_error,
 )
+from ..text_outline import InstalledTextMetrics, measure_installed_text
 
 from .context import (
     TEXT_FLOW_PRESERVE,
@@ -66,7 +67,7 @@ from .utils import (
     combine_opacity, parse_hex_color, parse_svg_color,
     resolve_project_text_image_fill, resolve_url_id, get_effective_filter_id,
     parse_inline_style, parse_font_family, is_cjk_char,
-    detect_text_lang, estimate_text_cluster_widths, font_px_to_hpt,
+    detect_text_lang, font_px_to_hpt,
     resolve_text_run_fonts, split_project_text_clusters,
     text_has_rtl_characters, text_uses_rtl,
     is_thick_circle_shorthand, parse_project_geometry_length,
@@ -1919,38 +1920,14 @@ def convert_polyline(elem: ET.Element, ctx: ConvertContext) -> ShapeResult | Non
 # text
 # ---------------------------------------------------------------------------
 
-_SERIF_WIDTH_FAMILIES = {
-    'book antiqua',
-    'cambria',
-    'fangsong',
-    'garamond',
-    'georgia',
-    'kaiti',
-    'palatino',
-    'palatino linotype',
-    'serif',
-    'simsun',
-    'songti',
-    'times',
-    'times new roman',
-}
-
 _TEXTBOX_PADDING_MIN_PX = 0.5
 _TEXTBOX_PADDING_MAX_PX = 2.0
 _TEXTBOX_PADDING_RATIO = 0.04
-# Single-line auto-fit headroom interpolates between a low-caps base and an
-# all-caps ceiling for each run. The crude per-char width estimate undercounts
-# capitals most, so all-caps runs need the ceiling to keep wrap-ignoring
-# renderers (LibreOffice) from folding. Applying headroom per run also prevents
-# a short serif label from forcing a conservative serif multiplier onto an
-# otherwise sans-serif line. Values are calibrated against LibreOffice renders
-# of all-caps bold lines, with bases left above mixed-case and CJK render
-# ratios; exact ratios shift with font substitution, so these carry deliberate
-# margin rather than tracking one environment's numbers.
-_TEXT_WIDTH_HEADROOM_BASE = 1.06
-_TEXT_WIDTH_HEADROOM_CAPS = 1.12
-_SERIF_TEXT_WIDTH_HEADROOM_BASE = 1.12
-_SERIF_TEXT_WIDTH_HEADROOM_CAPS = 1.36
+# HarfBuzz measures the selected font file, while PowerPoint and LibreOffice
+# may differ in font substitution, hinting, and line-break rounding. Keep an
+# explicit cross-renderer margin instead of returning to per-character guesses.
+_TEXT_METRIC_SAFETY_FACTOR = 1.12
+_TEXT_VERTICAL_SAFETY_FACTOR = 1.06
 _TEXT_BULLET_MARKERS = {
     '·': '•',
     '•': '•',
@@ -1974,14 +1951,24 @@ def _text_line_vertical_extent(
     font_size: float,
 ) -> tuple[float, float, bool]:
     """Return native-math-aware ascent/descent for one authored text line."""
-    ascent = font_size * 0.85
-    descent = font_size * 0.35
+    ascent = 0.0
+    descent = 0.0
     has_inline_formula = False
     from ..native_objects.formula_compiler import (
         estimate_inline_formula_vertical_extent,
     )
 
     for run in runs:
+        if str(run.get('text', '')):
+            metrics = measure_text_run_metrics(run)
+            ascent = max(
+                ascent,
+                metrics.ascent * _TEXT_VERTICAL_SAFETY_FACTOR,
+            )
+            descent = max(
+                descent,
+                metrics.descent * _TEXT_VERTICAL_SAFETY_FACTOR,
+            )
         latex = run.get(_INLINE_FORMULA_KEY)
         if latex is None:
             continue
@@ -1990,6 +1977,10 @@ def _text_line_vertical_extent(
         extent = estimate_inline_formula_vertical_extent(str(latex))
         ascent = max(ascent, run_font_size * extent.ascent_em)
         descent = max(descent, run_font_size * extent.descent_em)
+    if ascent <= 0:
+        ascent = font_size * 0.85
+    if descent <= 0:
+        descent = font_size * 0.35
     return ascent, descent, has_inline_formula
 
 
@@ -2026,30 +2017,14 @@ def _letter_spacing_to_drawingml_spc(letter_spacing_px: float) -> str:
     return f' spc="{spacing}"'
 
 
-def _is_serif_run(run: dict[str, Any]) -> bool:
-    """Return whether a text run uses a serif-like family."""
-    for family in str(run.get('font_family', '')).split(','):
-        name = family.strip().strip("'\"").lower()
-        if not name or name in {'sans-serif', 'sans serif'}:
-            continue
-        if name in _SERIF_WIDTH_FAMILIES:
-            return True
-        if 'serif' in name and 'sans' not in name:
-            return True
-    return False
-
-
-def _estimate_run_text_width(run: dict[str, Any]) -> float:
-    """Estimate one run using the metrics actually emitted to DrawingML."""
+def measure_text_run_metrics(run: dict[str, Any]) -> InstalledTextMetrics:
+    """Measure one emitted DrawingML run from its resolved installed font."""
     text = str(run.get('text', ''))
+    if not text:
+        raise ValueError('Cannot measure an empty DrawingML text run')
     font_size_px = (
         font_px_to_hpt(float(run.get('font_size', 16)))
         / FONT_PX_TO_HUNDREDTHS_PT
-    )
-    cluster_widths = estimate_text_cluster_widths(
-        text,
-        font_size_px,
-        str(run.get('font_weight', '400')),
     )
     letter_spacing_px = (
         drawingml_letter_spacing(
@@ -2057,10 +2032,22 @@ def _estimate_run_text_width(run: dict[str, Any]) -> float:
         )
         / FONT_PX_TO_HUNDREDTHS_PT
     )
-    return sum(cluster_widths) + letter_spacing_px * max(
-        len(cluster_widths) - 1,
-        0,
+    return measure_installed_text(
+        text,
+        str(run.get('font_family', '') or 'sans-serif'),
+        font_size_px,
+        str(run.get('font_weight', '400')),
+        str(run.get('font_style', 'normal')),
+        letter_spacing_px,
     )
+
+
+def _estimate_run_text_width(run: dict[str, Any]) -> float:
+    """Return one run width from actual font shaping."""
+    text = str(run.get('text', ''))
+    if not text:
+        return 0.0
+    return measure_text_run_metrics(run).width
 
 
 def validate_text_run_advances(runs: list[dict[str, Any]]) -> None:
@@ -2080,25 +2067,6 @@ def validate_text_run_advances(runs: list[dict[str, Any]]) -> None:
         )
 
 
-def _uppercase_fraction(runs: list[dict[str, Any]]) -> float:
-    """Fraction of cased letters across ``runs`` that are uppercase.
-
-    Caseless scripts (CJK, digits, punctuation) are ignored, so a Chinese or
-    numeric line reports 0.0 and takes the low-caps headroom base.
-    """
-    upper = 0
-    cased = 0
-    for run in runs:
-        for ch in str(run.get('text', '')):
-            if ch.lower() != ch.upper():
-                cased += 1
-                if ch.isupper():
-                    upper += 1
-    if not cased:
-        return 0.0
-    return upper / cased
-
-
 def _estimate_text_runs_width(
     runs: list[dict[str, Any]],
     *,
@@ -2106,30 +2074,17 @@ def _estimate_text_runs_width(
 ) -> float:
     """Estimate a line of text runs.
 
-    ``include_headroom`` is useful for single-line auto-fit boxes where a
-    renderer that measures text slightly wider would otherwise wrap. The
-    headroom scales independently with each run's family and uppercase
-    fraction. This keeps mixed-font lines from inheriting the most conservative
-    run's multiplier. Paragraph boxes use this value as a wrapping constraint,
-    so adding headroom there stretches the merged text frame beyond the
-    author's source line width.
+    ``include_headroom`` is useful for single-line auto-fit boxes where another
+    renderer measures the same installed font slightly wider. Paragraph boxes
+    use the exact shaped width as a wrapping constraint.
     """
     if not include_headroom:
         return sum(_estimate_run_text_width(run) for run in runs)
 
-    width = 0.0
-    for run in runs:
-        if _is_serif_run(run):
-            base = _SERIF_TEXT_WIDTH_HEADROOM_BASE
-            ceiling = _SERIF_TEXT_WIDTH_HEADROOM_CAPS
-        else:
-            base = _TEXT_WIDTH_HEADROOM_BASE
-            ceiling = _TEXT_WIDTH_HEADROOM_CAPS
-        caps = _uppercase_fraction([run])
-        width += _estimate_run_text_width(run) * (
-            base + (ceiling - base) * caps
-        )
-    return width
+    return sum(
+        _estimate_run_text_width(run) * _TEXT_METRIC_SAFETY_FACTOR
+        for run in runs
+    )
 
 
 def estimate_single_line_text_frame_width(

@@ -186,6 +186,16 @@ class _ShapedRun:
     advance_x: float
 
 
+@dataclass(frozen=True)
+class InstalledTextMetrics:
+    """Measured horizontal and vertical metrics from resolved font files."""
+
+    width: float
+    ascent: float
+    descent: float
+    resolved_fonts: tuple[str, ...]
+
+
 @dataclass
 class _DrawState:
     origin_x: float
@@ -335,6 +345,133 @@ def text_element_to_path_commands(
             f"{_element_label(element)} has no glyph outline to materialize"
         )
     return normalize_path_commands(commands)
+
+
+def measure_installed_text(
+    text: str,
+    font_family: str | Sequence[str],
+    font_size: float,
+    font_weight: str | int = "400",
+    font_style: str = "normal",
+    letter_spacing: float = 0.0,
+    *,
+    font_dirs: Sequence[str | Path] = (),
+) -> InstalledTextMetrics:
+    """Measure text with HarfBuzz and the actual resolved installed fonts."""
+    if not isinstance(text, str) or not text:
+        raise ValueError("Installed font measurement requires non-empty text")
+    font_size = float(font_size)
+    letter_spacing = float(letter_spacing)
+    if not math.isfinite(font_size) or font_size <= 0:
+        raise ValueError("Installed font measurement requires positive font-size")
+    if not math.isfinite(letter_spacing):
+        raise ValueError("Installed font measurement requires finite letter-spacing")
+    if isinstance(font_family, str):
+        families = _parse_font_family_stack(font_family or "sans-serif")
+    else:
+        families = tuple(str(value).strip() for value in font_family)
+        if not families or any(not value for value in families):
+            raise ValueError("font-family must contain at least one family name")
+    parsed_weight = parse_project_font_weight(str(font_weight)).canonical
+    weight = {"normal": 400, "bold": 700}.get(parsed_weight)
+    if weight is None:
+        weight = int(parsed_weight)
+    italic = bool(parse_project_font_style(font_style).value)
+    explicit_roots = _normalize_explicit_font_dirs(font_dirs)
+    return _measure_installed_text_cached(
+        text,
+        families,
+        font_size,
+        weight,
+        italic,
+        letter_spacing,
+        explicit_roots,
+    )
+
+
+@lru_cache(maxsize=8192)
+def _measure_installed_text_cached(
+    text: str,
+    families: tuple[str, ...],
+    font_size: float,
+    font_weight: int,
+    italic: bool,
+    letter_spacing: float,
+    explicit_roots: tuple[str, ...],
+) -> InstalledTextMetrics:
+    """Cache exact shaping because checker and exporter revisit the same runs."""
+    catalog = _font_catalog(explicit_roots)
+    measurement_families = _measurement_font_stack(families)
+    candidates = _font_candidates(
+        catalog,
+        measurement_families,
+        font_weight,
+        italic,
+    )
+    candidates = [
+        face for face in candidates
+        if _face_supports_style(face, font_weight, italic)
+    ]
+    if not candidates:
+        raise ValueError(
+            "Cannot resolve an installed font for measurement from "
+            f"{', '.join(measurement_families)!r}"
+        )
+    clusters = split_project_text_clusters(text)
+    marker = ET.Element("text", {"font-family": ",".join(families)})
+    marker.text = text
+    runs = _font_runs(marker, clusters, candidates, measurement_families)
+    shaped_runs = _shape_runs(
+        runs,
+        font_size,
+        font_weight,
+        italic,
+        letter_spacing,
+    )
+    natural_width = sum(run.advance_x for run in shaped_runs)
+    width = natural_width + max(0, len(clusters) - 1) * letter_spacing
+    ascent = 0.0
+    descent = 0.0
+    resolved_fonts: list[str] = []
+    for shaped in shaped_runs:
+        extents = shaped.font.get_font_extents("ltr")
+        if extents is None:
+            raise ValueError(
+                f"Font {shaped.run.face.path} does not expose horizontal metrics"
+            )
+        ascent = max(ascent, float(extents.ascender) * shaped.scale)
+        descent = max(descent, -float(extents.descender) * shaped.scale)
+        resolved = (
+            f"{shaped.run.face.families[0]} "
+            f"({shaped.run.face.path}#{shaped.run.face.index})"
+        )
+        if resolved not in resolved_fonts:
+            resolved_fonts.append(resolved)
+    if not all(math.isfinite(value) for value in (width, ascent, descent)):
+        raise ValueError("Installed font measurement produced non-finite metrics")
+    if width <= 0 or ascent <= 0 or descent < 0:
+        raise ValueError("Installed font measurement produced invalid metrics")
+    return InstalledTextMetrics(
+        width=width,
+        ascent=ascent,
+        descent=descent,
+        resolved_fonts=tuple(resolved_fonts),
+    )
+
+
+def _measurement_font_stack(families: tuple[str, ...]) -> tuple[str, ...]:
+    """Append a real generic fallback when the named face is unavailable."""
+    keys = {_family_key(value) for value in families}
+    if keys.intersection(_GENERIC_FAMILIES):
+        return families
+    serif = any(
+        "serif" in key or key in {
+            "cambria", "fangsong", "kaiti", "simsun", "songti",
+            "times", "timesnewroman",
+        }
+        for key in keys
+    )
+    return (*families, "serif" if serif else "sans-serif")
 
 
 @lru_cache(maxsize=1)

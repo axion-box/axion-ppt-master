@@ -1,5 +1,5 @@
 ---
-description: Axion's compact one-pass Generate profile for direct SVG authoring, mechanical delivery, and native PPTX visual review.
+description: Axion's compact one-pass Generate profile for direct SVG authoring, mechanical delivery, and actual-PPTX visual review with bounded SVG regeneration.
 ---
 
 # Quick Generate Profile
@@ -208,12 +208,16 @@ The PPTX is the delivery truth. SVG authoring must nevertheless prevent obvious
 overflow before export:
 
 1. Keep titles to one or two deliberate lines and body statements concise.
-2. Give every text block a known width and maximum line count.
+2. Give every text block a known width and maximum line count, with visible
+   width/height and neighbor-spacing margin; never fit copy exactly to its SVG
+   bbox because actual fonts, substitution, shaping, hinting, and renderer
+   rounding can change the final PPTX/PNG line break.
 3. If content exceeds that box, first remove repetition, then restructure into
    labels plus evidence, then split the idea only when the requested page count
    permits it.
 4. Do not patch the exported PPTX during authoring. The post-export `review`
-   command owns bounded native text repair against the actual rendered PPTX.
+   command owns bounded full-page SVG regeneration against the actual rendered
+   PPTX, independent source-equivalence review, re-export, and visual recheck.
 
 ### Charts and tables
 
@@ -291,10 +295,16 @@ After delivery passes, run exactly one actual-PPTX review:
 ```
 
 Only this command sends the rendered PPTX pages to a multimodal chat model. It
-owns the at-most-two-round candidate → native text patch → render → affected
-page recheck → publish loop, `validation/native-repairs.json`, backup, rollback,
-and atomic replacement. Do not load its contact sheet into the parent agent,
-modify SVG for a PPTX-only fit defect, or hand-edit OOXML.
+owns the at-most-two-round actual PNG + complete current SVG → complete
+regenerated SVG → independent text-only old/new source review → mechanical
+checker/export/render → same visual-role recheck loop,
+`validation/svg-visual-repairs.json`, backup, rollback, and atomic replacement.
+The visual role directly returns the replacement page; it never emits pixel,
+shape, or coordinate patch advice for another agent. It may adjust layout,
+enlarge a safe bbox, reduce type, or shorten equivalent copy, and must retain
+margin for font substitution, glyph shaping, hinting, and SVG/PPTX/PNG rounding
+differences. Do not load its PNG or SVG evidence into the parent agent, run a
+second repair path, or hand-edit OOXML.
 
 `no-change` and `published` are success. For `rolled-back`, `reviewer`, or
 `mechanical`, follow the returned `next_action` and retain the original PPTX.

@@ -143,6 +143,7 @@ try:
     from svg_to_pptx.drawingml.elements import (
         drawingml_text_frame_width_emu as _drawingml_text_frame_width_emu,
         estimate_single_line_text_frame_width as _estimate_single_line_text_frame_width,
+        measure_text_run_metrics as _measure_text_run_metrics,
         project_image_errors as _project_image_errors,
         validate_single_line_text_run_advances as _validate_single_line_text_run_advances,
         validate_preset_geometry_metadata as _validate_preset_geometry_metadata,
@@ -150,6 +151,7 @@ try:
 except ImportError:
     _drawingml_text_frame_width_emu = None
     _estimate_single_line_text_frame_width = None
+    _measure_text_run_metrics = None
     _project_image_errors = None
     _validate_single_line_text_run_advances = None
     _validate_preset_geometry_metadata = None
@@ -2078,13 +2080,16 @@ class SVGQualityChecker:
         font_size: float,
     ) -> Tuple[float, float]:
         """Return native-math-aware ascent/descent for checker bounds."""
-        ascent = font_size * 0.85
-        descent = font_size * 0.35
-        if _estimate_inline_formula_vertical_extent is None:
-            return ascent, descent
+        ascent = 0.0
+        descent = 0.0
         for run in runs:
+            text = str(run.get('text', ''))
+            if text and _measure_text_run_metrics is not None:
+                metrics = _measure_text_run_metrics(run)
+                ascent = max(ascent, metrics.ascent * 1.06)
+                descent = max(descent, metrics.descent * 1.06)
             latex = run.get('inline_formula')
-            if latex is None:
+            if latex is None or _estimate_inline_formula_vertical_extent is None:
                 continue
             try:
                 run_font_size = float(run.get('font_size', font_size))
@@ -2093,6 +2098,10 @@ class SVGQualityChecker:
                 continue
             ascent = max(ascent, run_font_size * extent.ascent_em)
             descent = max(descent, run_font_size * extent.descent_em)
+        if ascent <= 0:
+            ascent = font_size * 0.85
+        if descent <= 0:
+            descent = font_size * 0.35
         return ascent, descent
 
     def _check_text_output_geometry(
@@ -2272,6 +2281,7 @@ class SVGQualityChecker:
                 or 'start'
             ).strip().lower()
             anchor = _parse_project_text_anchor(raw_anchor).value
+            ascent, descent = cls._text_line_vertical_extent(runs, font_size)
         except (TypeError, ValueError):
             return None
         if not all(math.isfinite(value) for value in (x, y, width, font_size)):
@@ -2290,7 +2300,6 @@ class SVGQualityChecker:
             right = x + width
         else:
             return None
-        ascent, descent = cls._text_line_vertical_extent(runs, font_size)
         top = y - ascent
         bottom = y + descent
 

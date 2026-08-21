@@ -114,7 +114,9 @@ Axion 发行版的核心承诺：
 1. 对照本文件和 Axion Agent 的 `docs/design/modules/cmd-ppt-process.md` 阅读上游 route、profile、
    stage 与 reference 变更。
 2. 把 Axion 命令边界、失败分类、receipt gate 和实际 PPTX visual-review loop 融合进原始 authority；
-   禁止在 `ppt-main.yaml`、额外 system prompt 或文件尾部追加旁路 patch。
+   visual review 必须由同一视觉角色读取最终 PNG 与完整 SVG 并直接重生成整页 SVG，再经独立纯文字
+   old/new 源码等价性审查、机械重导出和同角色复检；禁止恢复 native/shape/像素 patch 合同，也禁止在
+   `ppt-main.yaml`、额外 system prompt 或文件尾部追加旁路 patch。
 3. 删除 GlenClaw/Axion 运行环境不可执行的 provider、renderer 和工具分支。宿主保证注入
    `AXION_AGENT_BIN_PATH`，prompt 必须直接调用，禁止先检查、搜索或探测它。
 4. 一个行为只保留一个 owning document；重复规则改为引用，不允许 profile、stage 和 reference
