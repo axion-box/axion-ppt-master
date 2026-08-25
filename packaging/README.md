@@ -12,7 +12,7 @@ such as APT must install and configure it before configuring `axion-ppt-master`.
 ```bash
 python3 packaging/build.py
 python3 packaging/build.py --arch amd64
-python3 packaging/build.py --arch arm64 -V 0.2.0 --beta \
+python3 packaging/build.py --arch arm64 -V 0.2.0 -beta 4 \
   -o /tmp/axion-ppt-master_arm64.deb
 ```
 
@@ -23,7 +23,9 @@ The target architecture maps to these fixed images:
 
 `--arch` defaults to the current machine architecture and accepts `amd64` or
 `arm64`. The package version defaults to `packaging/VERSION`; `-V/--version`
-overrides it, and `--beta` appends `~beta`. The default output is
+overrides it. `-beta/--beta NUMBER` appends `~beta.NUMBER`; for example,
+`-V 1.2.3 -beta 4` produces version `1.2.3~beta.4`. The beta number must be a
+non-negative integer. The default output is
 `packaging/dist/axion-ppt-master_<version>_<arch>.deb`. `-o/--output` selects an
 explicit Deb file, including a path outside the repository.
 

@@ -5,11 +5,11 @@ PPT Master - Debian Package Builder
 Build the tracked PPT Master skill files into an axion-ppt-master Deb package.
 
 Usage:
-    python3 packaging/build.py [--arch ARCH] [-o OUTPUT] [-V VERSION] [--beta]
+    python3 packaging/build.py [--arch ARCH] [-o OUTPUT] [-V VERSION] [--beta NUMBER]
 
 Examples:
     python3 packaging/build.py
-    python3 packaging/build.py -V 0.2.0 --arch amd64 --beta
+    python3 packaging/build.py -V 0.2.0 --arch amd64 -beta 4
     python3 packaging/build.py -o /tmp/axion-ppt-master.deb
 
 Dependencies:
@@ -78,11 +78,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Debian package version; defaults to packaging/VERSION.",
     )
     parser.add_argument(
+        "-beta",
         "--beta",
-        action="store_true",
-        help="Append ~beta to the package version.",
+        type=_parse_beta_number,
+        metavar="NUMBER",
+        help="Append ~beta.NUMBER to the package version.",
     )
     return parser
+
+
+def _parse_beta_number(value: str) -> int:
+    """Parse one non-negative beta sequence number."""
+
+    if not value.isdigit():
+        raise argparse.ArgumentTypeError("beta number must be a non-negative integer")
+    return int(value)
 
 
 def _run(command: list[str], *, capture: bool = False) -> str:
@@ -212,8 +222,8 @@ def _docker_build_command(args: argparse.Namespace, *, arch: str) -> list[str]:
         command.extend(["--output", str(output)])
     if args.version is not None:
         command.extend(["--version", args.version])
-    if args.beta:
-        command.append("--beta")
+    if args.beta is not None:
+        command.extend(["--beta", str(args.beta)])
     return command
 
 
@@ -254,15 +264,15 @@ def _validate_version(version: str) -> str:
     return value
 
 
-def _resolve_version(explicit_version: str | None, beta: bool) -> str:
+def _resolve_version(explicit_version: str | None, beta: int | None) -> str:
     """Resolve the requested version and apply the optional beta suffix."""
 
     requested_version = (
         explicit_version if explicit_version is not None else _read_default_version()
     )
     version = _validate_version(requested_version)
-    if beta and not version.endswith("~beta"):
-        version = _validate_version(f"{version}~beta")
+    if beta is not None:
+        version = _validate_version(f"{version}~beta.{beta}")
     return version
 
 
