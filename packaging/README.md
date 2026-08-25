@@ -6,6 +6,9 @@ The host requires Python 3, Docker, and a complete Git worktree. The container
 provides Git, `dpkg`, and `dpkg-deb`; the package does not install presentation
 runtime dependencies.
 
+The package declares a Debian dependency on `axion-bootstrap`. Package managers
+such as APT must install and configure it before configuring `axion-ppt-master`.
+
 ```bash
 python3 packaging/build.py
 python3 packaging/build.py --arch amd64
@@ -33,6 +36,6 @@ Inspect a result with:
 
 ```bash
 dpkg-deb -f packaging/dist/axion-ppt-master_0.1.1_arm64.deb \
-  Package Version Architecture Installed-Size
+  Package Version Architecture Depends Installed-Size
 dpkg-deb -c packaging/dist/axion-ppt-master_0.1.1_arm64.deb
 ```
