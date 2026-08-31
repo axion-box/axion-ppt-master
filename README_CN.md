@@ -371,11 +371,11 @@ Git 已跟踪的 PPT Master skill 会在固定 Docker 构建镜像中打成 Axio
 不会把本地 `.env` 或生成内容带入软件包：
 
 ```bash
-python3 packaging/build.py -V 0.1.1 --arch arm64
+python3 packaging/build.py -V 1.0.0 --arch arm64
 ```
 
 构建器支持 `--arch auto|amd64|arm64`、`-o/--output`、`-V/--version`，以及追加
-Debian 预发布后缀 `~beta` 的 `--beta` 开关。完整接口见
+Debian 预发布后缀 `~beta.NUMBER` 的 `--beta NUMBER`。完整接口见
 [`packaging/README.md`](./packaging/README.md)。
 
 | | 文档 | 说明 |

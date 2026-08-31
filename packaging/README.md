@@ -37,7 +37,24 @@ the target system to provide `glenclaw:glenclaw` with UID/GID `10001:10001`.
 Inspect a result with:
 
 ```bash
-dpkg-deb -f packaging/dist/axion-ppt-master_0.1.1_arm64.deb \
+dpkg-deb -f packaging/dist/axion-ppt-master_1.0.0_arm64.deb \
   Package Version Architecture Depends Installed-Size
-dpkg-deb -c packaging/dist/axion-ppt-master_0.1.1_arm64.deb
+dpkg-deb -c packaging/dist/axion-ppt-master_1.0.0_arm64.deb
 ```
+
+## Continuous delivery
+
+`.github/workflows/package.yml` runs on pushes to `main`, `develop`, and exact
+case-insensitive `vX.Y.Z` release tags. It executes three sequential jobs:
+
+1. validate repository attribution and compile the shipped Python tools;
+2. calculate the Git-derived version, build an arm64 Deb, and retain it as a
+   workflow artifact for 14 days;
+3. publish `main` packages to the Aptly `test` repository and `develop`
+   packages to `develop`. Tag packages remain workflow artifacts only.
+
+An exact release tag builds `X.Y.Z`. An untagged branch commit after the nearest
+reachable release tag builds the next patch as `X.Y.(Z+1)~beta.N`, where `N` is
+the number of commits after that tag. With no reachable release tag, the base is
+`0.0.1` and `N` is the total commit count. The self-hosted runner must provide
+Docker and `axion-aptly-publish`.

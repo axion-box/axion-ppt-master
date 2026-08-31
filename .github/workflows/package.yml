@@ -1,0 +1,160 @@
+name: Build Debian package
+
+"on":
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - "v*.*.*"
+      - "V*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: 1. Repository gates
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+      - aliyun-hk
+    timeout-minutes: 60
+    steps:
+      - name: Repair persistent runner workspace ownership
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          if [[ -d "${GITHUB_WORKSPACE}" ]]; then
+            case "${GITHUB_WORKSPACE}" in
+              ""|/)
+                exit 1
+                ;;
+            esac
+            sudo chown -R --no-dereference \
+              "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}"
+          fi
+
+      - name: Check out complete Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run repository gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 skills/ppt-master/scripts/attribution_guard.py
+          python3 -m compileall -q packaging skills/ppt-master/scripts
+
+  package:
+    name: 2. Build Deb
+    needs: gates
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+      - aliyun-hk
+    timeout-minutes: 180
+    outputs:
+      artifact_name: ${{ steps.metadata.outputs.artifact_name }}
+      publish_repository: ${{ steps.metadata.outputs.publish_repository }}
+    steps:
+      - name: Repair persistent runner workspace ownership
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          if [[ -d "${GITHUB_WORKSPACE}" ]]; then
+            case "${GITHUB_WORKSPACE}" in
+              ""|/)
+                exit 1
+                ;;
+            esac
+            sudo chown -R --no-dereference \
+              "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}"
+          fi
+
+      - name: Check out complete Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve package metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 packaging/ci_version.py >>"${GITHUB_OUTPUT}"
+          printf 'artifact_name=axion-ppt-master-%s-%s\n' \
+            "${GITHUB_REF_NAME}" "${GITHUB_SHA}" >>"${GITHUB_OUTPUT}"
+
+      - name: Build Debian package
+        shell: bash
+        env:
+          BASE_VERSION: ${{ steps.metadata.outputs.base_version }}
+          BETA_NUMBER: ${{ steps.metadata.outputs.beta_number }}
+          DEB_VERSION: ${{ steps.metadata.outputs.deb_version }}
+        run: |
+          set -euo pipefail
+          command -v docker >/dev/null
+          output="packaging/dist/ci/axion-ppt-master_${DEB_VERSION}_arm64.deb"
+          args=(
+            -V "${BASE_VERSION}"
+            --arch arm64
+            --output "${output}"
+          )
+          if [[ -n "${BETA_NUMBER}" ]]; then
+            args+=(--beta "${BETA_NUMBER}")
+          fi
+          python3 packaging/build.py "${args[@]}"
+          test -s "${output}"
+
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.metadata.outputs.artifact_name }}
+          path: packaging/dist/ci/*.deb
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: 3. Publish Deb
+    needs: package
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+      - aliyun-hk
+    timeout-minutes: 30
+    steps:
+      - name: Download Debian package
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.package.outputs.artifact_name }}
+          path: ${{ runner.temp }}/axion-ppt-master-deb
+
+      - name: Publish Debian package
+        shell: bash
+        env:
+          PUBLISH_REPOSITORY: ${{ needs.package.outputs.publish_repository }}
+          PACKAGE_DIRECTORY: ${{ runner.temp }}/axion-ppt-master-deb
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=("${PACKAGE_DIRECTORY}"/*.deb)
+          if [[ "${#packages[@]}" -ne 1 ]]; then
+            echo "expected exactly one Deb artifact, found ${#packages[@]}" >&2
+            exit 1
+          fi
+          if [[ -z "${PUBLISH_REPOSITORY}" ]]; then
+            echo "tag build: Deb is retained as a workflow artifact only"
+            exit 0
+          fi
+
+          publisher="$(command -v axion-aptly-publish)"
+          sudo -H env "${publisher}" publish \
+            --repo "${PUBLISH_REPOSITORY}" \
+            "${packages[0]}"

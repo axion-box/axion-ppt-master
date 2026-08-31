@@ -366,11 +366,12 @@ The tracked PPT Master skill can be packaged for Axion inside a fixed Docker
 builder image without copying local `.env` files or generated content:
 
 ```bash
-python3 packaging/build.py -V 0.1.1 --arch arm64
+python3 packaging/build.py -V 1.0.0 --arch arm64
 ```
 
 The builder supports `--arch auto|amd64|arm64`, `-o/--output`, `-V/--version`,
-and a `--beta` flag that appends the Debian pre-release suffix `~beta`. See
+and `--beta NUMBER`, which appends the Debian pre-release suffix
+`~beta.NUMBER`. See
 [`packaging/README.md`](./packaging/README.md) for the complete interface.
 
 | | Document | Description |
