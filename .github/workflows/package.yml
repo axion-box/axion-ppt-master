@@ -60,7 +60,7 @@ jobs:
     timeout-minutes: 180
     outputs:
       artifact_name: ${{ steps.metadata.outputs.artifact_name }}
-      publish_repository: ${{ steps.metadata.outputs.publish_repository }}
+      publish_repositories: ${{ steps.metadata.outputs.publish_repositories }}
     steps:
       - name: Repair persistent runner workspace ownership
         shell: bash
@@ -139,7 +139,7 @@ jobs:
       - name: Publish Debian package
         shell: bash
         env:
-          PUBLISH_REPOSITORY: ${{ needs.package.outputs.publish_repository }}
+          PUBLISH_REPOSITORIES: ${{ needs.package.outputs.publish_repositories }}
           PACKAGE_DIRECTORY: ${{ runner.temp }}/axion-ppt-master-deb
         run: |
           set -euo pipefail
@@ -149,12 +149,15 @@ jobs:
             echo "expected exactly one Deb artifact, found ${#packages[@]}" >&2
             exit 1
           fi
-          if [[ -z "${PUBLISH_REPOSITORY}" ]]; then
-            echo "tag build: Deb is retained as a workflow artifact only"
+          if [[ -z "${PUBLISH_REPOSITORIES}" ]]; then
+            echo "release-tagged branch build: Deb publication is handled by the tag workflow"
             exit 0
           fi
 
           publisher="$(command -v axion-aptly-publish)"
-          sudo -H env "${publisher}" publish \
-            --repo "${PUBLISH_REPOSITORY}" \
-            "${packages[0]}"
+          IFS=',' read -r -a repositories <<<"${PUBLISH_REPOSITORIES}"
+          for repository in "${repositories[@]}"; do
+            sudo -H env "${publisher}" publish \
+              --repo "${repository}" \
+              "${packages[0]}"
+          done

@@ -33,17 +33,18 @@ RELEASE_TAG_PATTERN = re.compile(
     flags=re.IGNORECASE,
 )
 BRANCH_REPOSITORIES = {"main": "test", "develop": "develop"}
+TAG_REPOSITORIES = ("stable", "test", "develop")
 GitOutput = Callable[[list[str]], str]
 
 
 @dataclass(frozen=True)
 class CIVersion:
-    """Describe one CI package version and its optional publication channel."""
+    """Describe one CI package version and its publication channels."""
 
     base_version: str
     beta_number: int | None
     deb_version: str
-    publish_repository: str
+    publish_repositories: tuple[str, ...]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -141,16 +142,16 @@ def resolve_ci_version(
     github_ref: str,
     git: GitOutput = git_output,
 ) -> CIVersion:
-    """Resolve the package version and publication channel for one CI ref."""
+    """Resolve the package version and publication channels for one CI ref."""
 
     kind, name = ref_kind(github_ref)
-    repository = BRANCH_REPOSITORIES.get(name, "") if kind == "branch" else ""
     exact_release = exact_release_at_head(git)
     if exact_release is not None:
         if kind == "tag" and parse_release_tag(name) != exact_release:
             raise ValueError(f"tag ref {name!r} does not match the release at HEAD")
         version = format_release(exact_release)
-        return CIVersion(version, None, version, repository)
+        repositories = TAG_REPOSITORIES if kind == "tag" else ()
+        return CIVersion(version, None, version, repositories)
     if kind == "tag":
         raise ValueError(f"tag ref {name!r} does not point at an exact release tag")
 
@@ -173,7 +174,7 @@ def resolve_ci_version(
         base_version,
         beta_number,
         f"{base_version}~beta.{beta_number}",
-        repository,
+        (BRANCH_REPOSITORIES[name],),
     )
 
 
@@ -186,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"base_version={version.base_version}")
     print(f"beta_number={'' if version.beta_number is None else version.beta_number}")
     print(f"deb_version={version.deb_version}")
-    print(f"publish_repository={version.publish_repository}")
+    print(f"publish_repositories={','.join(version.publish_repositories)}")
     return 0
 
 

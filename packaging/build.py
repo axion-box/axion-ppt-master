@@ -36,7 +36,6 @@ SKILL_ROOT = PROJECT_ROOT / "skills" / "ppt-master"
 VERSION_FILE = PACKAGE_ROOT / "VERSION"
 POSTINST_FILE = PACKAGE_ROOT / "scripts" / "postinst"
 PACKAGE_NAME = "axion-ppt-master"
-PACKAGE_DEPENDS = "axion-bootstrap"
 DIST_ROOT = PACKAGE_ROOT / "dist"
 SKILL_REPOSITORY_PREFIX = "skills/ppt-master/"
 CONTAINER_BUILD_ENV = "AXION_PACKAGING_CONTAINER_BUILD"
@@ -338,7 +337,6 @@ def _write_control(debian_dir: pathlib.Path, version: str, arch: str, installed_
         "Priority: optional\n"
         f"Architecture: {arch}\n"
         "Maintainer: Axion Team\n"
-        f"Depends: {PACKAGE_DEPENDS}\n"
         f"Installed-Size: {installed_size}\n"
         "Homepage: https://github.com/axion-box/axion-ppt-master\n"
         "Description: Axion PPT master skill package.\n"
@@ -368,7 +366,6 @@ def _validate_deb(path: pathlib.Path, version: str, arch: str) -> None:
         "Package": PACKAGE_NAME,
         "Version": version,
         "Architecture": arch,
-        "Depends": PACKAGE_DEPENDS,
     }
     for field, expected_value in expected.items():
         actual = _run(["dpkg-deb", "--field", str(path), field], capture=True)

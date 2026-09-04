@@ -6,9 +6,6 @@ The host requires Python 3, Docker, and a complete Git worktree. The container
 provides Git, `dpkg`, and `dpkg-deb`; the package does not install presentation
 runtime dependencies.
 
-The package declares a Debian dependency on `axion-bootstrap`. Package managers
-such as APT must install and configure it before configuring `axion-ppt-master`.
-
 ```bash
 python3 packaging/build.py
 python3 packaging/build.py --arch amd64
@@ -38,7 +35,7 @@ Inspect a result with:
 
 ```bash
 dpkg-deb -f packaging/dist/axion-ppt-master_1.0.0_arm64.deb \
-  Package Version Architecture Depends Installed-Size
+  Package Version Architecture Installed-Size
 dpkg-deb -c packaging/dist/axion-ppt-master_1.0.0_arm64.deb
 ```
 
@@ -50,8 +47,10 @@ case-insensitive `vX.Y.Z` release tags. It executes three sequential jobs:
 1. validate repository attribution and compile the shipped Python tools;
 2. calculate the Git-derived version, build an arm64 Deb, and retain it as a
    workflow artifact for 14 days;
-3. publish `main` packages to the Aptly `test` repository and `develop`
-   packages to `develop`. Tag packages remain workflow artifacts only.
+3. publish untagged `main` packages to the Aptly `test` repository and untagged
+   `develop` packages to `develop`; an exact release tag publishes the same Deb
+   to `stable`, `test`, and `develop`. A `main` or `develop` workflow for the
+   same tagged commit retains its artifact but skips publication.
 
 An exact release tag builds `X.Y.Z`. An untagged branch commit after the nearest
 reachable release tag builds the next patch as `X.Y.(Z+1)~beta.N`, where `N` is
