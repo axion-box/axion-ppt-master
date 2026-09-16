@@ -187,6 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"base_version={version.base_version}")
     print(f"beta_number={'' if version.beta_number is None else version.beta_number}")
     print(f"deb_version={version.deb_version}")
+    print(f"tarball_version={version.deb_version.replace('~beta.', '-beta.')}")
     print(f"publish_repositories={','.join(version.publish_repositories)}")
     return 0
 

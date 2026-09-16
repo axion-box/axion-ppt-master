@@ -1,4 +1,4 @@
-name: Build Debian package
+name: Build and publish axion-ppt-master
 
 "on":
   push:
@@ -8,156 +8,100 @@ name: Build Debian package
     tags:
       - "v*.*.*"
       - "V*.*.*"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: axion-ppt-master-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PACKAGE_BUILDER_IMAGE: axion-registry.cn-beijing.cr.aliyuncs.com/axion/package-builder:1.3.0-debian12-arm64
+
 jobs:
-  gates:
-    name: 1. Repository gates
-    runs-on:
-      - self-hosted
-      - Linux
-      - ARM64
-      - aliyun-hk
-    timeout-minutes: 60
-    steps:
-      - name: Repair persistent runner workspace ownership
-        shell: bash
-        working-directory: ${{ runner.temp }}
-        run: |
-          set -euo pipefail
-          if [[ -d "${GITHUB_WORKSPACE}" ]]; then
-            case "${GITHUB_WORKSPACE}" in
-              ""|/)
-                exit 1
-                ;;
-            esac
-            sudo chown -R --no-dereference \
-              "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}"
-          fi
-
-      - name: Check out complete Git history
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run repository gates
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 skills/ppt-master/scripts/attribution_guard.py
-          python3 -m compileall -q packaging skills/ppt-master/scripts
-
-  package:
-    name: 2. Build Deb
-    needs: gates
+  release:
     runs-on:
       - self-hosted
       - Linux
       - ARM64
       - aliyun-hk
     timeout-minutes: 180
-    outputs:
-      artifact_name: ${{ steps.metadata.outputs.artifact_name }}
-      publish_repositories: ${{ steps.metadata.outputs.publish_repositories }}
+
     steps:
-      - name: Repair persistent runner workspace ownership
+      - name: Repair workspace ownership
         shell: bash
         working-directory: ${{ runner.temp }}
         run: |
           set -euo pipefail
           if [[ -d "${GITHUB_WORKSPACE}" ]]; then
-            case "${GITHUB_WORKSPACE}" in
-              ""|/)
-                exit 1
-                ;;
-            esac
             sudo chown -R --no-dereference \
               "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}"
           fi
 
-      - name: Check out complete Git history
-        uses: actions/checkout@v4
+      - name: Check out complete release repository
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          path: ppt-master
+          persist-credentials: false
 
-      - name: Resolve package metadata
+      - name: Resolve immutable release metadata
         id: metadata
         shell: bash
+        working-directory: ppt-master
         run: |
           set -euo pipefail
           python3 packaging/ci_version.py >>"${GITHUB_OUTPUT}"
-          printf 'artifact_name=axion-ppt-master-%s-%s\n' \
-            "${GITHUB_REF_NAME}" "${GITHUB_SHA}" >>"${GITHUB_OUTPUT}"
 
-      - name: Build Debian package
+      - name: Prepare private ARM64 runner
+        if: steps.metadata.outputs.publish_repositories != ''
         shell: bash
-        env:
-          BASE_VERSION: ${{ steps.metadata.outputs.base_version }}
-          BETA_NUMBER: ${{ steps.metadata.outputs.beta_number }}
-          DEB_VERSION: ${{ steps.metadata.outputs.deb_version }}
         run: |
           set -euo pipefail
           command -v docker >/dev/null
-          output="packaging/dist/ci/axion-ppt-master_${DEB_VERSION}_arm64.deb"
-          args=(
-            -V "${BASE_VERSION}"
-            --arch arm64
-            --output "${output}"
-          )
-          if [[ -n "${BETA_NUMBER}" ]]; then
-            args+=(--beta "${BETA_NUMBER}")
-          fi
-          python3 packaging/build.py "${args[@]}"
-          test -s "${output}"
+          command -v axion-aptly-publish >/dev/null
+          test "$(uname -m)" = aarch64
+          sudo -H env docker pull "${PACKAGE_BUILDER_IMAGE}"
 
-      - name: Upload Debian package
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.metadata.outputs.artifact_name }}
-          path: packaging/dist/ci/*.deb
-          if-no-files-found: error
-          retention-days: 14
-
-  publish:
-    name: 3. Publish Deb
-    needs: package
-    runs-on:
-      - self-hosted
-      - Linux
-      - ARM64
-      - aliyun-hk
-    timeout-minutes: 30
-    steps:
-      - name: Download Debian package
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.package.outputs.artifact_name }}
-          path: ${{ runner.temp }}/axion-ppt-master-deb
-
-      - name: Publish Debian package
+      - name: Verify repository and packaging contracts
+        if: steps.metadata.outputs.publish_repositories != ''
         shell: bash
-        env:
-          PUBLISH_REPOSITORIES: ${{ needs.package.outputs.publish_repositories }}
-          PACKAGE_DIRECTORY: ${{ runner.temp }}/axion-ppt-master-deb
+        working-directory: ppt-master
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          packages=("${PACKAGE_DIRECTORY}"/*.deb)
-          if [[ "${#packages[@]}" -ne 1 ]]; then
-            echo "expected exactly one Deb artifact, found ${#packages[@]}" >&2
-            exit 1
-          fi
-          if [[ -z "${PUBLISH_REPOSITORIES}" ]]; then
-            echo "release-tagged branch build: Deb publication is handled by the tag workflow"
-            exit 0
-          fi
+          python3 skills/ppt-master/scripts/attribution_guard.py
+          python3 -m compileall -q packaging skills/ppt-master/scripts
+          bash -n packaging/scripts/install.sh packaging/scripts/postinst
+          test "$(git ls-files -- skills/ppt-master | wc -l)" -gt 0
+          ! grep -R -E 'uses:[[:space:]]*actions/(upload|download)-artifact@' \
+            .github/workflows
 
-          publisher="$(command -v axion-aptly-publish)"
-          IFS=',' read -r -a repositories <<<"${PUBLISH_REPOSITORIES}"
-          for repository in "${repositories[@]}"; do
-            sudo -H env "${publisher}" publish \
-              --repo "${repository}" \
-              "${packages[0]}"
-          done
+      - name: Build, verify, and publish Deb and TGZ
+        if: steps.metadata.outputs.publish_repositories != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -H env \
+            GIT_CONFIG_COUNT=1 \
+            GIT_CONFIG_KEY_0=safe.directory \
+            GIT_CONFIG_VALUE_0="${GITHUB_WORKSPACE}/ppt-master" \
+            python3 ppt-master/packaging/release.py \
+            --repository-root ppt-master \
+            --tarball-version "${{ steps.metadata.outputs.tarball_version }}" \
+            --debian-version "${{ steps.metadata.outputs.deb_version }}" \
+            --repositories "${{ steps.metadata.outputs.publish_repositories }}" \
+            --architecture arm64
+
+      - name: Report tagged branch skip
+        if: steps.metadata.outputs.publish_repositories == ''
+        shell: bash
+        run: |
+          printf '%s\n' "commit is release-tagged; only the tag run publishes it"
+
+      - name: Restore workspace ownership
+        if: always()
+        shell: bash
+        run: |
+          sudo chown -R -- "$(id -u):$(id -g)" "${GITHUB_WORKSPACE}"
