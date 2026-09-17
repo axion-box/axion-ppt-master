@@ -12,9 +12,9 @@ does not discover or bundle other directories below `skills/`.
 Both formats install the Skill at
 `/usr/local/axion/skills/ppt-master`. The TGZ contains exactly one top-level
 versioned directory whose release interface is `install.sh` plus `payload/`.
-The installer must run as root, validates the existing `glenclaw:glenclaw`
-identity as UID/GID `10001:10001`, replaces only the `ppt-master` directory,
-and never controls running systemd services. Online upgrades take effect after
+The installer must run as root on a clean app-layer parent. It requires the
+`ppt-master` directory to be absent, copies the Skill with UID/GID `10001:10001`,
+does not preserve or migrate an older tree, and never controls running systemd services. Online upgrades take effect after
 the device reboots, so a component is never restarted against a mixed stack.
 
 ## Local build
