@@ -14,7 +14,8 @@ Both formats install the Skill at
 versioned directory whose release interface is `install.sh` plus `payload/`.
 The installer must run as root, validates the existing `glenclaw:glenclaw`
 identity as UID/GID `10001:10001`, replaces only the `ppt-master` directory,
-and restores an active `axion-agent.service` after the transaction.
+and never controls running systemd services. Online upgrades take effect after
+the device reboots, so a component is never restarted against a mixed stack.
 
 ## Local build
 

@@ -9,13 +9,11 @@ EXPECTED_UID="10001"
 EXPECTED_GID="10001"
 TARGET_PARENT="/usr/local/axion/skills"
 TARGET_DIR="${TARGET_PARENT}/ppt-master"
-SERVICE_NAME="axion-agent.service"
 LOCK_FILE="/usr/local/axion/.axion-ppt-master.install.lock"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 SOURCE_DIR="${SCRIPT_DIR}/payload/usr/local/axion/skills/ppt-master"
 STAGE_DIR=""
 BACKUP_DIR=""
-SERVICE_WAS_ACTIVE=0
 TARGET_REPLACED=0
 COMMITTED=0
 
@@ -51,9 +49,6 @@ cleanup() {
         mv -- "${BACKUP_DIR}" "${TARGET_DIR}"
       fi
     fi
-    if [[ "${SERVICE_WAS_ACTIVE}" == 1 ]] && command -v systemctl >/dev/null 2>&1; then
-      systemctl start "${SERVICE_NAME}" >/dev/null 2>&1 || true
-    fi
   fi
   exit "${status}"
 }
@@ -79,12 +74,6 @@ main() {
   cp -a -- "${SOURCE_DIR}/." "${STAGE_DIR}/"
   chown -R "${SYSTEM_USER}:${SYSTEM_GROUP}" "${STAGE_DIR}"
 
-  if command -v systemctl >/dev/null 2>&1 && \
-      systemctl is-active --quiet "${SERVICE_NAME}"; then
-    SERVICE_WAS_ACTIVE=1
-    systemctl stop "${SERVICE_NAME}"
-  fi
-
   if [[ -e "${TARGET_DIR}" || -L "${TARGET_DIR}" ]]; then
     BACKUP_DIR="${TARGET_PARENT}/.ppt-master.backup.$$"
     rm -rf -- "${BACKUP_DIR}"
@@ -94,14 +83,10 @@ main() {
   STAGE_DIR=""
   TARGET_REPLACED=1
 
-  if [[ "${SERVICE_WAS_ACTIVE}" == 1 ]]; then
-    systemctl start "${SERVICE_NAME}"
-  fi
-
   COMMITTED=1
   rm -rf -- "${BACKUP_DIR}"
   trap - EXIT HUP INT TERM
-  printf '%s\n' "${PACKAGE_NAME}: installed ${TARGET_DIR}"
+  printf '%s\n' "${PACKAGE_NAME}: installed ${TARGET_DIR}; reboot to activate it"
 }
 
 trap cleanup EXIT HUP INT TERM
