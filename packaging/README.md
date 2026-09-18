@@ -11,10 +11,10 @@ does not discover or bundle other directories below `skills/`.
 
 Both formats install the Skill at
 `/usr/local/axion/skills/ppt-master`. The TGZ contains exactly one top-level
-versioned directory whose release interface is `install.sh` plus `payload/`.
-The installer must run as root on a clean app-layer parent. It requires the
-`ppt-master` directory to be absent, copies the Skill with UID/GID `10001:10001`,
-does not preserve or migrate an older tree, and never controls running systemd services. Online upgrades take effect after
+versioned directory whose release interface is `install.sh`, `uninstall.sh`, and `payload/`.
+The installer must run as root. It runs the previously registered uninstaller and the current archive's static uninstaller,
+replaces the complete `ppt-master` program tree, copies the Skill with UID/GID `10001:10001`, and registers the current
+script at `/usr/local/.uninstallers/axion-ppt-master/uninstall.sh`. It does not migrate data or configuration and never controls running systemd services. Online upgrades take effect after
 the device reboots, so a component is never restarted against a mixed stack.
 
 ## Local build

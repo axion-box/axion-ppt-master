@@ -73,7 +73,7 @@ jobs:
           set -euo pipefail
           python3 skills/ppt-master/scripts/attribution_guard.py
           python3 -m compileall -q packaging skills/ppt-master/scripts
-          bash -n packaging/scripts/install.sh packaging/scripts/postinst
+          bash -n packaging/scripts/install.sh packaging/scripts/uninstall.sh packaging/scripts/postinst
           test "$(git ls-files -- skills/ppt-master | wc -l)" -gt 0
           ! grep -R -E 'uses:[[:space:]]*actions/(upload|download)-artifact@' \
             .github/workflows

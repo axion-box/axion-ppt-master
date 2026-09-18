@@ -23,6 +23,7 @@ SKILL_ROOT = PROJECT_ROOT / "skills" / "ppt-master"
 VERSION_FILE = PACKAGE_ROOT / "VERSION"
 POSTINST_FILE = PACKAGE_ROOT / "scripts" / "postinst"
 INSTALL_SCRIPT = PACKAGE_ROOT / "scripts" / "install.sh"
+UNINSTALL_SCRIPT = PACKAGE_ROOT / "scripts" / "uninstall.sh"
 PACKAGE_NAME = "axion-ppt-master"
 DIST_ROOT = PACKAGE_ROOT / "dist"
 INSTALL_ROOT = pathlib.PurePosixPath("/usr/local/axion/skills/ppt-master")
@@ -453,11 +454,16 @@ def _build_tarball(
 
     if not INSTALL_SCRIPT.is_file():
         raise BuildError(f"tarball installer is missing: {INSTALL_SCRIPT}")
+    if not UNINSTALL_SCRIPT.is_file():
+        raise BuildError(f"tarball uninstaller is missing: {UNINSTALL_SCRIPT}")
     archive_root = workspace / f"{PACKAGE_NAME}_{tarball_version}"
     archive_root.mkdir()
     installer = archive_root / "install.sh"
     shutil.copyfile(INSTALL_SCRIPT, installer)
     installer.chmod(0o755)
+    uninstaller = archive_root / "uninstall.sh"
+    shutil.copyfile(UNINSTALL_SCRIPT, uninstaller)
+    uninstaller.chmod(0o755)
     _copy_payload_tree(payload_root, archive_root / "payload")
     _normalize_directory_modes(archive_root)
 
